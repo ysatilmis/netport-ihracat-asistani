@@ -4,6 +4,8 @@ import { fillTemplate } from '@/lib/prompts'
 import { checkTokenLimit, recordTokenUsage } from '@/lib/token'
 import type { Database } from '@/lib/supabase/types'
 
+export const maxDuration = 60 // Vercel: allow up to 60s for LLM streaming
+
 type PromptTemplate = Database['public']['Tables']['prompt_templates']['Row']
 
 export async function POST(request: Request) {
