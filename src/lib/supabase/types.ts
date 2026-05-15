@@ -47,6 +47,8 @@ export type Database = {
           prompt_key: string
           input_json: Record<string, string>
           output_text: string
+          report_sections: Record<string, { title: string; text: string; phase: number }> | null
+          is_full_report: boolean
           created_at: string
         }
         Insert: Omit<Database['public']['Tables']['reports']['Row'], 'id' | 'created_at'>

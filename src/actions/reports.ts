@@ -22,6 +22,8 @@ export async function saveReport(data: {
     prompt_key: data.promptKey,
     input_json: data.input_json,
     output_text: data.output_text,
+    report_sections: null,
+    is_full_report: false,
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
