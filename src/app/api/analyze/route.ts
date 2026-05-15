@@ -54,8 +54,6 @@ export async function POST(request: Request) {
         usage.totalTokens ?? 0,
         template.model
       )
-    }).catch((err) => {
-      console.error('[analyze] usage tracking failed:', err)
     })
 
     return streamResult.toTextStreamResponse()
