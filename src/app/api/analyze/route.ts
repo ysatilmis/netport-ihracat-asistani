@@ -42,19 +42,29 @@ export async function POST(request: Request) {
   }
 
   const filledPrompt = fillTemplate(template.template_text, inputs)
-  const streamResult = await callLLMStream(template.model as LLMModel, filledPrompt)
 
-  const response = streamResult.toTextStreamResponse()
+  try {
+    const streamResult = await callLLMStream(template.model as LLMModel, filledPrompt)
 
-  void streamResult.usage.then((usage) => {
-    void recordTokenUsage(
-      user.id,
-      template.phase as 1 | 2 | 3,
-      promptKey,
-      usage.totalTokens ?? 0,
-      template.model
+    void streamResult.usage.then((usage) => {
+      void recordTokenUsage(
+        user.id,
+        template.phase as 1 | 2 | 3,
+        promptKey,
+        usage.totalTokens ?? 0,
+        template.model
+      )
+    }).catch((err) => {
+      console.error('[analyze] usage tracking failed:', err)
+    })
+
+    return streamResult.toTextStreamResponse()
+  } catch (err) {
+    console.error('[analyze] LLM call failed:', err)
+    const msg = err instanceof Error ? err.message : String(err)
+    return new Response(
+      JSON.stringify({ error: 'LLM_ERROR', detail: msg, model: template.model }),
+      { status: 502, headers: { 'Content-Type': 'application/json' } }
     )
-  })
-
-  return response
+  }
 }

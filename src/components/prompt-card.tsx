@@ -41,7 +41,12 @@ export function PromptCard({ promptKey, title, templateText, phase, defaultInput
       }
 
       if (!res.ok) {
-        setError('Bir hata oluştu.')
+        try {
+          const errData = await res.json() as { error: string; detail?: string }
+          setError(errData.detail ? `Hata: ${errData.detail}` : 'Bir hata oluştu.')
+        } catch {
+          setError(`Hata (${res.status}): sunucudan yanıt alınamadı.`)
+        }
         return
       }
 
