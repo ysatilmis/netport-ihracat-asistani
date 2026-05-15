@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import type { ReportRow } from '@/actions/reports'
 
 const PHASE_LABELS: Record<number, string> = {
   1: 'Araştırma & Hazırlık',
@@ -13,8 +14,8 @@ const PHASE_LABELS: Record<number, string> = {
 export default async function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
-  const { data: report } = await supabase
-    .from('reports').select('*').eq('id', id).single()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: report } = await (supabase.from('reports') as any).select('*').eq('id', id).single() as { data: ReportRow | null }
 
   if (!report) notFound()
 

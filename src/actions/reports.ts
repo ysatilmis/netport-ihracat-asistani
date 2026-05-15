@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import type { Database } from '@/lib/supabase/types'
 
 type ReportInsert = Database['public']['Tables']['reports']['Insert']
+export type ReportRow = Database['public']['Tables']['reports']['Row']
 
 export async function saveReport(data: {
   phase: number
@@ -28,11 +29,11 @@ export async function saveReport(data: {
   revalidatePath('/results')
 }
 
-export async function getReports() {
+export async function getReports(): Promise<ReportRow[]> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('reports')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (supabase.from('reports') as any)
     .select('*')
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false }) as { data: ReportRow[] | null }
   return data ?? []
 }
