@@ -39,3 +39,34 @@ export async function getReports(): Promise<ReportRow[]> {
     .order('created_at', { ascending: false }) as { data: ReportRow[] | null }
   return data ?? []
 }
+
+export async function saveFullReport(data: {
+  product: string
+  country: string
+  sections: Record<string, { title: string; text: string; phase: number }>
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const outputText = Object.values(data.sections)
+    .map((s) => `## ${s.title}\n\n${s.text}`)
+    .join('\n\n---\n\n')
+
+  const insert: ReportInsert = {
+    user_id: user.id,
+    phase: 0,
+    prompt_key: 'full_report',
+    input_json: { product: data.product, country: data.country },
+    output_text: outputText,
+    report_sections: data.sections,
+    is_full_report: true,
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: report } = await (supabase.from('reports') as any)
+    .insert(insert).select('id').single() as { data: { id: string } | null }
+
+  revalidatePath('/results')
+  return report?.id ?? null
+}
