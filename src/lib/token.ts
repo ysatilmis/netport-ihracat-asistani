@@ -59,7 +59,7 @@ export async function checkTokenLimit(userId: string): Promise<void> {
 
 export async function recordTokenUsage(
   userId: string,
-  phase: 1 | 2 | 3,
+  phase: 1 | 2 | 3 | 4,
   promptKey: string,
   tokensUsed: number,
   model: string

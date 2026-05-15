@@ -5,12 +5,13 @@ const PHASE_COLORS = {
   1: { bg: '#EFF6FF', border: '#BFDBFE', badge: 'Araştırma' },
   2: { bg: '#F0FDF4', border: '#BBF7D0', badge: 'Konumlandırma' },
   3: { bg: '#FFF7ED', border: '#FED7AA', badge: 'İlk Temas' },
+  4: { bg: '#FAF5FF', border: '#E9D5FF', badge: 'Yönetim Özeti' },
 } as const
 
 interface ReportSectionProps {
   title: string
   text: string
-  phase: 1 | 2 | 3
+  phase: 1 | 2 | 3 | 4
   isStreaming?: boolean
 }
 

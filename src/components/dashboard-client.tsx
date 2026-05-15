@@ -10,10 +10,9 @@ type ReportState = Record<string, SectionData>
 
 interface DashboardClientProps {
   defaultProduct: string
-  defaultCountry: string
 }
 
-export function DashboardClient({ defaultProduct, defaultCountry }: DashboardClientProps) {
+export function DashboardClient({ defaultProduct }: DashboardClientProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [sections, setSections] = useState<ReportState>({})
   const [streamingSection, setStreamingSection] = useState<string | undefined>()
@@ -21,10 +20,10 @@ export function DashboardClient({ defaultProduct, defaultCountry }: DashboardCli
   const [completedCount, setCompletedCount] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [reportProduct, setReportProduct] = useState('')
-  const [reportCountry, setReportCountry] = useState('')
+  const [selectedCountry, setSelectedCountry] = useState('')
   const [reportDone, setReportDone] = useState(false)
 
-  const handleSubmit = async (product: string, country: string) => {
+  const handleSubmit = async (product: string) => {
     setIsLoading(true)
     setSections({})
     setStreamingSection(undefined)
@@ -33,13 +32,13 @@ export function DashboardClient({ defaultProduct, defaultCountry }: DashboardCli
     setError(null)
     setReportDone(false)
     setReportProduct(product)
-    setReportCountry(country)
+    setSelectedCountry('')
 
     try {
       const res = await fetch('/api/report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product, country }),
+        body: JSON.stringify({ product }),
       })
 
       if (res.status === 429) {
@@ -82,10 +81,13 @@ export function DashboardClient({ defaultProduct, defaultCountry }: DashboardCli
               text?: string
               totalTokens?: number
               message?: string
+              country?: string
             }
 
             if (event.type === 'phase_start' && event.phase) {
               setCurrentPhase(event.phase)
+            } else if (event.type === 'country_selected' && event.country) {
+              setSelectedCountry(event.country)
             } else if (event.type === 'section_start' && event.section) {
               setStreamingSection(event.section)
               setSections((prev) => ({
@@ -93,7 +95,7 @@ export function DashboardClient({ defaultProduct, defaultCountry }: DashboardCli
                 [event.section!]: {
                   title: sectionTitles[event.section!] ?? event.section!,
                   text: '',
-                  phase: (sectionPhases[event.section!] ?? 1) as 1 | 2 | 3,
+                  phase: (sectionPhases[event.section!] ?? 1) as 1 | 2 | 3 | 4,
                 },
               }))
             } else if (event.type === 'chunk' && event.section && event.text) {
@@ -137,7 +139,7 @@ export function DashboardClient({ defaultProduct, defaultCountry }: DashboardCli
           </h1>
         </div>
         <p className="ml-4 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-          Ürününüzü girin — Perplexity, GPT-4o ve Claude arka planda çalışıp 10 bölümlük tam analiz sunar.
+          Ürününüzü girin — AI önce en uygun pazarı seçer, sonra zincirleme 11 bölümlük tam analiz üretir (araştırma → konumlandırma → satış → yönetici özeti).
         </p>
       </div>
 
@@ -146,7 +148,6 @@ export function DashboardClient({ defaultProduct, defaultCountry }: DashboardCli
         <div className="max-w-xl mb-8 p-6 rounded-2xl bg-white border" style={{ borderColor: 'var(--border)' }}>
           <ProductForm
             defaultProduct={defaultProduct}
-            defaultCountry={defaultCountry}
             onSubmit={handleSubmit}
             isLoading={isLoading}
           />
@@ -166,6 +167,15 @@ export function DashboardClient({ defaultProduct, defaultCountry }: DashboardCli
         </div>
       )}
 
+      {/* Selected country badge */}
+      {selectedCountry && hasReport && (
+        <div className="max-w-xl mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm"
+          style={{ backgroundColor: 'var(--accent-soft, #eef6ff)', color: 'var(--accent, #1e40af)' }}>
+          <span>🎯</span>
+          <span>AI seçimi: <strong>{selectedCountry}</strong> pazarı — sonraki tüm bölümler bu ülkeye göre üretiliyor.</span>
+        </div>
+      )}
+
       {/* Progress */}
       {hasReport && (
         <ReportProgress
@@ -181,7 +191,7 @@ export function DashboardClient({ defaultProduct, defaultCountry }: DashboardCli
       {hasReport && (
         <ReportView
           product={reportProduct}
-          country={reportCountry}
+          country={selectedCountry}
           sections={sections}
           streamingSectionKey={streamingSection}
         />

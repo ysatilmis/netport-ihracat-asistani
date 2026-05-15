@@ -6,19 +6,17 @@ import { Label } from '@/components/ui/label'
 
 interface ProductFormProps {
   defaultProduct?: string
-  defaultCountry?: string
-  onSubmit: (product: string, country: string) => void
+  onSubmit: (product: string) => void
   isLoading: boolean
 }
 
-export function ProductForm({ defaultProduct = '', defaultCountry = '', onSubmit, isLoading }: ProductFormProps) {
+export function ProductForm({ defaultProduct = '', onSubmit, isLoading }: ProductFormProps) {
   const [product, setProduct] = useState(defaultProduct)
-  const [country, setCountry] = useState(defaultCountry)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!product.trim()) return
-    onSubmit(product.trim(), country.trim())
+    onSubmit(product.trim())
   }
 
   return (
@@ -37,20 +35,9 @@ export function ProductForm({ defaultProduct = '', defaultCountry = '', onSubmit
           className="text-base"
           style={{ borderColor: 'var(--border)' }}
         />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="country" className="text-sm font-medium" style={{ color: 'var(--muted-foreground)' }}>
-          Hedef ülke{' '}
-          <span className="text-xs font-normal">(opsiyonel — boş bırakırsanız AI en uygun pazarı önerir)</span>
-        </Label>
-        <Input
-          id="country"
-          value={country}
-          onChange={(e) => setCountry(e.target.value)}
-          placeholder="örn: Almanya, Hollanda, BAE"
-          disabled={isLoading}
-          style={{ borderColor: 'var(--border)' }}
-        />
+        <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+          AI en uygun 3 hedef pazarı bulup birinci öncelikli ülkeyle tüm raporu zincirleme üretir. Sen sadece ürünü yaz.
+        </p>
       </div>
       <Button
         type="submit"

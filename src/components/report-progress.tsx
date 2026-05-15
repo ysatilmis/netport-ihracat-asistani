@@ -1,6 +1,6 @@
-import { PHASE_META } from '@/lib/report-prompts'
+import { PHASE_META, REPORT_SECTIONS } from '@/lib/report-prompts'
 
-const TOTAL_SECTIONS = 10
+const TOTAL_SECTIONS = REPORT_SECTIONS.length
 
 interface ReportProgressProps {
   completedSections: number
@@ -30,8 +30,8 @@ export function ReportProgress({ completedSections, currentSection, currentPhase
       </div>
 
       <div className="flex gap-2 text-xs">
-        {([1, 2, 3] as const).map((phase) => {
-          const sectionEnd = phase === 1 ? 4 : phase === 2 ? 7 : 10
+        {([1, 2, 3, 4] as const).map((phase) => {
+          const sectionEnd = phase === 1 ? 4 : phase === 2 ? 7 : phase === 3 ? 10 : 11
           const phaseDone = completedSections >= sectionEnd
           const phaseActive = currentPhase === phase && !phaseDone
 
