@@ -1,12 +1,19 @@
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-sm border">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-900">Netport AI</h1>
-          <p className="text-sm text-slate-500 mt-1">İhracat Asistanı</p>
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--primary)' }}>
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--accent)' }}>
+              <span className="text-white font-bold">N</span>
+            </div>
+            <span className="text-xl font-bold text-white">Netport AI</span>
+          </div>
+          <p className="text-sm text-blue-200">İhracat Asistanı — Yapay Zeka Destekli Pazar Analizi</p>
         </div>
-        {children}
+        <div className="bg-white rounded-2xl shadow-2xl p-8">
+          {children}
+        </div>
       </div>
     </div>
   )

@@ -10,20 +10,33 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!user) redirect('/login')
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <span className="font-bold text-slate-900">Netport AI İhracat Asistanı</span>
-          <nav className="flex gap-4 text-sm">
-            <Link href="/dashboard" className="text-slate-600 hover:text-slate-900">Dashboard</Link>
-            <Link href="/results" className="text-slate-600 hover:text-slate-900">Raporlarım</Link>
-          </nav>
-        </div>
-        <div className="flex items-center gap-4">
-          <TokenMeter userId={user.id} />
-          <form action={signOut}>
-            <button type="submit" className="text-sm text-slate-500 hover:text-slate-900">Çıkış</button>
-          </form>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
+      <header style={{ backgroundColor: 'var(--primary)' }} className="px-6 py-0 shadow-lg">
+        <div className="max-w-6xl mx-auto flex items-center justify-between h-14">
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: 'var(--accent)' }}>
+                <span className="text-white text-sm font-bold">N</span>
+              </div>
+              <span className="font-bold text-white text-base tracking-tight">Netport AI</span>
+            </div>
+            <nav className="flex gap-6 text-sm">
+              <Link href="/dashboard" className="text-blue-200 hover:text-white transition-colors font-medium">
+                Dashboard
+              </Link>
+              <Link href="/results" className="text-blue-200 hover:text-white transition-colors font-medium">
+                Raporlarım
+              </Link>
+            </nav>
+          </div>
+          <div className="flex items-center gap-4">
+            <TokenMeter userId={user.id} />
+            <form action={signOut}>
+              <button type="submit" className="text-sm text-blue-200 hover:text-white transition-colors">
+                Çıkış
+              </button>
+            </form>
+          </div>
         </div>
       </header>
       <main className="max-w-6xl mx-auto px-6 py-8">{children}</main>

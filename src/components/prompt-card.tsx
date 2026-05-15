@@ -68,11 +68,11 @@ export function PromptCard({ promptKey, title, templateText, phase, defaultInput
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">{title}</CardTitle>
+    <Card className="w-full bg-white hover:shadow-md transition-shadow duration-200" style={{ borderColor: 'var(--border)' }}>
+      <CardHeader className="pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
+        <CardTitle className="text-sm font-semibold" style={{ color: 'var(--primary)' }}>{title}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 pt-4">
         {placeholders.map((placeholder) => (
           <div key={placeholder} className="space-y-1">
             <Label htmlFor={`${promptKey}-${placeholder}`} className="text-xs capitalize text-slate-600">
@@ -92,7 +92,8 @@ export function PromptCard({ promptKey, title, templateText, phase, defaultInput
           onClick={handleAnalyze}
           disabled={isLoading}
           size="sm"
-          className="w-full"
+          className="w-full text-white font-medium"
+          style={{ backgroundColor: isLoading ? 'var(--muted-foreground)' : 'var(--primary)' }}
         >
           {isLoading ? 'Analiz ediliyor...' : 'Analiz Et'}
         </Button>
