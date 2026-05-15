@@ -53,19 +53,7 @@ export function PromptCard({ promptKey, title, templateText, phase, defaultInput
         const { done, value } = await reader.read()
         if (done) break
         const chunk = decoder.decode(value, { stream: true })
-        // Parse SSE/text stream chunks — extract text content
-        const lines = chunk.split('\n')
-        for (const line of lines) {
-          if (line.startsWith('0:')) {
-            // Vercel AI SDK text stream format: "0:\"chunk\""
-            try {
-              const text = JSON.parse(line.slice(2))
-              if (typeof text === 'string') setCompletion((prev) => prev + text)
-            } catch {
-              // ignore malformed lines
-            }
-          }
-        }
+        setCompletion((prev) => prev + chunk)
       }
     } catch {
       setError('Bağlantı hatası.')
