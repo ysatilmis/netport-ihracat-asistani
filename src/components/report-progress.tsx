@@ -1,6 +1,7 @@
-import { PHASE_META, REPORT_SECTIONS } from '@/lib/report-prompts'
+import { PHASE_META, DEEP_DIVE_SECTIONS } from '@/lib/report-prompts'
 
-const TOTAL_SECTIONS = REPORT_SECTIONS.length
+// Progress bar deep-dive akışını sayar (target_countries ayrı render edilir).
+const TOTAL_SECTIONS = DEEP_DIVE_SECTIONS.length
 
 interface ReportProgressProps {
   completedSections: number
@@ -31,7 +32,12 @@ export function ReportProgress({ completedSections, currentSection, currentPhase
 
       <div className="flex gap-2 text-xs">
         {([1, 2, 3, 4] as const).map((phase) => {
-          const sectionEnd = phase === 1 ? 4 : phase === 2 ? 7 : phase === 3 ? 10 : 11
+          // target_countries ayrı koştuğu için deep-dive akışı 10 bölüm:
+          // Faz 1 (3 bölüm: market_size, consumer, legal) — 1..3
+          // Faz 2 (3 bölüm) — 4..6
+          // Faz 3 (3 bölüm) — 7..9
+          // Faz 4 (1 bölüm — executive summary) — 10
+          const sectionEnd = phase === 1 ? 3 : phase === 2 ? 6 : phase === 3 ? 9 : 10
           const phaseDone = completedSections >= sectionEnd
           const phaseActive = currentPhase === phase && !phaseDone
 

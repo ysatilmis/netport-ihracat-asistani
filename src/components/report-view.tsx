@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ReportSection } from './report-section'
 import { saveFullReport } from '@/actions/reports'
-import { REPORT_SECTIONS } from '@/lib/report-prompts'
+import { DEEP_DIVE_SECTIONS, TARGET_COUNTRIES_SECTION } from '@/lib/report-prompts'
 import { useRouter } from 'next/navigation'
 
 interface ReportViewProps {
@@ -11,9 +11,10 @@ interface ReportViewProps {
   country: string
   sections: Record<string, { title: string; text: string; phase: number }>
   streamingSectionKey?: string
+  countriesText?: string
 }
 
-export function ReportView({ product, country, sections, streamingSectionKey }: ReportViewProps) {
+export function ReportView({ product, country, sections, streamingSectionKey, countriesText }: ReportViewProps) {
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const router = useRouter()
@@ -21,7 +22,17 @@ export function ReportView({ product, country, sections, streamingSectionKey }: 
   const handleSave = async () => {
     setSaving(true)
     try {
-      const id = await saveFullReport({ product, country, sections })
+      const allSections: typeof sections = { ...sections }
+      // target_countries section'ı dashboard'da ayrı tutuluyor — save ederken
+      // raporun ilk bölümü olarak ekle.
+      if (countriesText?.trim()) {
+        allSections[TARGET_COUNTRIES_SECTION.key] = {
+          title: TARGET_COUNTRIES_SECTION.title,
+          text: countriesText,
+          phase: TARGET_COUNTRIES_SECTION.phase,
+        }
+      }
+      const id = await saveFullReport({ product, country, sections: allSections })
       setSaved(true)
       if (id) router.push(`/results/${id}`)
     } finally {
@@ -29,7 +40,7 @@ export function ReportView({ product, country, sections, streamingSectionKey }: 
     }
   }
 
-  const isComplete = Object.keys(sections).length === REPORT_SECTIONS.length
+  const isComplete = Object.keys(sections).length === DEEP_DIVE_SECTIONS.length
 
   return (
     <div>
@@ -59,7 +70,7 @@ export function ReportView({ product, country, sections, streamingSectionKey }: 
         )}
       </div>
 
-      {REPORT_SECTIONS.map((section) => {
+      {DEEP_DIVE_SECTIONS.map((section) => {
         const data = sections[section.key]
         if (!data) return null
         return (

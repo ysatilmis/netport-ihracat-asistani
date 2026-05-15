@@ -2,9 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { callLLMStream, type LLMModel } from '@/lib/llm'
 import { checkTokenLimit, recordTokenUsage } from '@/lib/token'
 import {
-  REPORT_SECTIONS,
+  DEEP_DIVE_SECTIONS,
+  TARGET_COUNTRIES_SECTION,
   PHASE_META,
-  extractSelectedCountry,
   type PromptContext,
   type PreviousSection,
 } from '@/lib/report-prompts'
@@ -13,6 +13,15 @@ export const maxDuration = 300
 
 function sseLine(event: Record<string, unknown>): string {
   return `data: ${JSON.stringify(event)}\n\n`
+}
+
+interface ReportRequest {
+  product: string
+  country: string
+  // Faz 1 §1 çıktısı — kullanıcı bu metni çıktı olarak gördükten sonra ülkeyi
+  // seçti. Sonraki section'lara bağlam olarak inject ediyoruz, böylece
+  // target_countries section'ı tekrar koşmaz.
+  countriesContext?: string
 }
 
 export async function POST(request: Request) {
@@ -35,16 +44,18 @@ export async function POST(request: Request) {
     throw e
   }
 
-  const { product } = (await request.json()) as { product: string }
+  const body = (await request.json()) as ReportRequest
 
-  if (!product?.trim()) {
-    return new Response(JSON.stringify({ error: 'product is required' }), {
+  if (!body.product?.trim() || !body.country?.trim()) {
+    return new Response(JSON.stringify({ error: 'product and country are required' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     })
   }
 
-  const productClean = product.trim()
+  const productClean = body.product.trim()
+  const countryClean = body.country.trim()
+  const countriesContextText = body.countriesContext?.trim() || ''
   let totalTokens = 0
 
   const stream = new ReadableStream({
@@ -53,14 +64,21 @@ export async function POST(request: Request) {
       const send = (event: Record<string, unknown>) =>
         controller.enqueue(enc.encode(sseLine(event)))
 
+      // target_countries section'ını re-run etmek yerine kullanıcıdan gelen
+      // önceki çıktıyı bağlam olarak yerleştir.
       const previousSections: Record<string, PreviousSection> = {}
-      let selectedCountry: string | undefined
+      if (countriesContextText) {
+        previousSections[TARGET_COUNTRIES_SECTION.key] = {
+          title: TARGET_COUNTRIES_SECTION.title,
+          text: countriesContextText,
+        }
+      }
 
       try {
         let currentPhase = 0
 
-        for (let idx = 0; idx < REPORT_SECTIONS.length; idx++) {
-          const section = REPORT_SECTIONS[idx]
+        for (let idx = 0; idx < DEEP_DIVE_SECTIONS.length; idx++) {
+          const section = DEEP_DIVE_SECTIONS[idx]
 
           if (section.phase !== currentPhase) {
             currentPhase = section.phase
@@ -78,7 +96,10 @@ export async function POST(request: Request) {
             phase: section.phase,
           })
 
-          const ctx: PromptContext = { selectedCountry, previousSections }
+          const ctx: PromptContext = {
+            selectedCountry: countryClean,
+            previousSections,
+          }
           const prompt = section.buildPrompt(productClean, ctx)
 
           let sectionText = ''
@@ -102,30 +123,20 @@ export async function POST(request: Request) {
             send({ type: 'chunk', section: section.key, text: errMsg })
           }
 
-          // Section çıktısını sonraki bölümlerin context'ine ekle.
           previousSections[section.key] = {
             title: section.title,
             text: sectionText,
           }
 
-          // İlk section bittiğinde seçilen ülkeyi çıkar ve UI'a bildir.
-          if (section.key === 'target_countries' && !selectedCountry) {
-            const extracted = extractSelectedCountry(sectionText)
-            if (extracted) {
-              selectedCountry = extracted
-              send({ type: 'country_selected', country: extracted })
-            }
-          }
-
           send({ type: 'section_done', section: section.key })
 
-          const nextSection = REPORT_SECTIONS[idx + 1]
+          const nextSection = DEEP_DIVE_SECTIONS[idx + 1]
           if (!nextSection || nextSection.phase !== currentPhase) {
             send({ type: 'phase_done', phase: currentPhase })
           }
         }
 
-        send({ type: 'done', totalTokens, selectedCountry })
+        send({ type: 'done', totalTokens, selectedCountry: countryClean })
       } catch (err) {
         console.error('[report] stream error:', err)
         send({ type: 'error', message: (err as Error).message })

@@ -39,12 +39,41 @@ function buildContextBlock(ctx: PromptContext, includeKeys: string[]): string {
   ].join('\n\n')
 }
 
-// Birinci öncelikli ülkeyi çıktıdan ayıklar.
-// target_countries promptu çıktının son satırında "SECILEN_ULKE: X" yazar.
-export function extractSelectedCountry(text: string): string | undefined {
-  const m = text.match(/SECILEN_ULKE:\s*([^\n\r]+)/i)
+export interface CountryOption {
+  name: string
+  score: number
+  customs_advantage: string
+  summary: string
+}
+
+// target_countries çıktısının sonundaki COUNTRIES_JSON satırını parse eder.
+// Hata durumunda undefined döner — caller'lar fallback davranışı yapmalı.
+export function extractCountries(text: string): CountryOption[] | undefined {
+  // COUNTRIES_JSON: {...} satırını yakala. LLM bazen kod bloğu içinde verebilir,
+  // her iki durumu da destekle.
+  const cleaned = text.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '')
+  const m = cleaned.match(/COUNTRIES_JSON:\s*(\{[\s\S]*?\})\s*$/)
   if (!m) return undefined
-  return m[1].trim().replace(/[.*_`]/g, '').trim() || undefined
+  try {
+    const parsed = JSON.parse(m[1]) as { countries?: CountryOption[] }
+    if (!Array.isArray(parsed.countries) || parsed.countries.length === 0) return undefined
+    return parsed.countries
+      .filter((c) => c && typeof c.name === 'string' && c.name.trim().length > 0)
+      .map((c) => ({
+        name: c.name.trim(),
+        score: typeof c.score === 'number' ? c.score : Number(c.score) || 0,
+        customs_advantage: typeof c.customs_advantage === 'string' ? c.customs_advantage : '',
+        summary: typeof c.summary === 'string' ? c.summary : '',
+      }))
+  } catch {
+    return undefined
+  }
+}
+
+// Geriye uyumluluk için — countries listesinin ilk elemanını döner.
+export function extractSelectedCountry(text: string): string | undefined {
+  const countries = extractCountries(text)
+  return countries?.[0]?.name
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -90,10 +119,12 @@ Her ülke için yukarıdaki 5 maddeyi alt başlıklarla aç.
 - **İkinci öncelik:** [ülke] — 2 cümle.
 - **Üçüncü öncelik:** [ülke] — 2 cümle.
 
-## ZORUNLU SON SATIR
-Tüm çıktının en son satırı, başka hiçbir şey olmadan, aynen şu formatta olacak:
+## ZORUNLU SON BLOK
+Tüm metnin EN SONUNDA, başka hiçbir şey olmadan, aynen şu yapıda **tek satırlık** bir JSON ver. Anahtarlar büyük/küçük harf duyarlı, yapı birebir aynen:
 
-SECILEN_ULKE: [birinci öncelikli ülke adı, sadece ülke ismi]
+COUNTRIES_JSON: {"countries":[{"name":"<ülke adı>","score":<1-10 puan>,"customs_advantage":"<kısa gümrük avantajı: AB GB / STA / yok>","summary":"<60-80 kelimelik avantaj özeti — neden bu ülke>"},{"name":"...","score":...,"customs_advantage":"...","summary":"..."},{"name":"...","score":...,"customs_advantage":"...","summary":"..."}]}
+
+Üç ülke aynı sırada — birinci öncelik ilk, ikinci öncelik ikinci, üçüncü öncelik üçüncü. JSON valid olmalı (kullanıcı bunu makineyle parse edecek).
 
 ## Kalite Kuralları
 - Her sayısal veriye \`[Kaynak: ad, yıl]\` ekle.
@@ -685,3 +716,11 @@ export const PHASE_META = {
   3: { title: 'İlk Temas & Satış', subtitle: 'Alıcı & müzakere — Claude' },
   4: { title: 'Yönetim Özeti', subtitle: 'Sentez & aksiyon planı — GPT-4o' },
 } as const
+
+// ─────────────────────────────────────────────────────────────────────────
+// Akış parçaları — 2 aşamalı (countries → user pick → deep dive)
+// TARGET_COUNTRIES_SECTION: faz 1 §1, kullanıcı seçim yapana kadar tek koşan.
+// DEEP_DIVE_SECTIONS: kullanıcı ülkeyi seçtikten sonra zincirleme akan 10 bölüm.
+// ─────────────────────────────────────────────────────────────────────────
+export const TARGET_COUNTRIES_SECTION = REPORT_SECTIONS[0]
+export const DEEP_DIVE_SECTIONS = REPORT_SECTIONS.slice(1)
