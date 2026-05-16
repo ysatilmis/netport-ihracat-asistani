@@ -12,8 +12,11 @@ const openrouter = createOpenAI({
 
 export type LLMModel = 'perplexity' | 'openai' | 'claude'
 
+// perplexity/sonar-pro: OpenRouter SSE streaming, AI SDK v4 ile uyumsuz
+// (": OPENROUTER PROCESSING" satırları stream'i blokluyor).
+// openai/gpt-4o ile replace edildi — pazar verileri training data'dan geliyor.
 const MODEL_MAP: Record<LLMModel, string> = {
-  perplexity: 'perplexity/sonar-pro',
+  perplexity: 'openai/gpt-4o',
   openai: 'openai/gpt-4o',
   claude: 'anthropic/claude-sonnet-4-5',
 }
