@@ -18,16 +18,21 @@ const MODEL_MAP: Record<LLMModel, string> = {
   claude: 'anthropic/claude-sonnet-4-5',
 }
 
-export async function callLLMStream(model: LLMModel, prompt: string) {
+export function callLLMStream(model: LLMModel, prompt: string) {
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) throw new Error('OPENROUTER_API_KEY eksik — Vercel > Settings > Env Vars kontrol edin')
 
+  const modelId = MODEL_MAP[model]
+
   const result = streamText({
-    model: openrouter(MODEL_MAP[model]),
+    model: openrouter(modelId),
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.3,
     onError: ({ error }) => {
-      console.error('[LLM stream error]', MODEL_MAP[model], error)
+      console.error('[LLM stream error]', modelId, error)
+    },
+    onFinish: ({ finishReason, text, usage }) => {
+      console.log('[LLM finish]', modelId, finishReason, text.length, 'chars', usage?.totalTokens ?? 0, 'tokens')
     },
   })
   return result
