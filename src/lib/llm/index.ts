@@ -1,7 +1,7 @@
 import { createOpenAI } from '@ai-sdk/openai'
 import { streamText, generateText } from 'ai'
 
-const openrouter = createOpenAI({
+export const openrouter = createOpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
   apiKey: process.env.OPENROUTER_API_KEY!,
   headers: {
@@ -15,7 +15,7 @@ export type LLMModel = 'perplexity' | 'openai' | 'claude'
 const MODEL_MAP: Record<LLMModel, string> = {
   perplexity: 'perplexity/sonar-pro',
   openai: 'openai/gpt-4o',
-  claude: 'anthropic/claude-sonnet-4-5',
+  claude: 'anthropic/claude-sonnet-4-6',
 }
 
 export interface LLMStreamResult {

@@ -1,0 +1,43 @@
+import Stripe from 'stripe'
+
+// Build-time'da STRIPE_SECRET_KEY yoksa modül yüklemesini bozma — runtime'da
+// gerekli endpoint çağrıldığında authenticator hatası atar.
+const stripeKey = process.env.STRIPE_SECRET_KEY
+
+export const stripe = stripeKey
+  ? new Stripe(stripeKey, {
+      apiVersion: '2026-04-22.dahlia',
+      typescript: true,
+    })
+  : (null as unknown as Stripe)
+
+export const STRIPE_PRICES = {
+  starter: process.env.STRIPE_PRICE_STARTER ?? '',
+  pro: process.env.STRIPE_PRICE_PRO ?? '',
+} as const
+
+export const PLANS = {
+  free: {
+    name: 'Ücretsiz',
+    tokens: 5000,
+    price: 0,
+    priceId: null,
+    features: ['1 tam rapor/ay', 'Temel ülke analizi', 'Sonuçları görüntüleme'],
+  },
+  starter: {
+    name: 'Starter',
+    tokens: 25000,
+    price: 29,
+    priceId: STRIPE_PRICES.starter,
+    features: ['5 tam rapor/ay', 'Tüm analiz aşamaları', 'PDF indirme', 'E-posta desteği'],
+  },
+  pro: {
+    name: 'Pro',
+    tokens: 100000,
+    price: 79,
+    priceId: STRIPE_PRICES.pro,
+    features: ['Sınırsız rapor', 'Öncelikli analiz', 'Özel prompt', 'Telefon desteği', 'CSV export'],
+  },
+} as const
+
+export type PlanTier = keyof typeof PLANS
