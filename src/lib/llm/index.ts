@@ -12,8 +12,10 @@ const openrouter = createOpenAI({
 
 export type LLMModel = 'perplexity' | 'openai' | 'claude'
 
+// perplexity/sonar-pro: OpenRouter hesabında yeterli kredi gerektiriyor ($0.03/call).
+// google/gemini-2.0-flash-001 ile değiştirildi (~$0.0001/call, COUNTRIES_JSON destekli).
 const MODEL_MAP: Record<LLMModel, string> = {
-  perplexity: 'perplexity/sonar-pro',
+  perplexity: 'google/gemini-2.0-flash-001',
   openai: 'openai/gpt-4o',
   claude: 'anthropic/claude-sonnet-4-5',
 }
