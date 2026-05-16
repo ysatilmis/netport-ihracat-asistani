@@ -271,7 +271,8 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
       )}
 
       {/* Aşama 1 çıktısı — target_countries section'ı */}
-      {(step === 'countries_streaming' || step === 'choosing' || step === 'deep_dive' || step === 'done') && countriesText && (
+      {/* choosing adımında sadece country cards göster; uzun analiz metnini gizle */}
+      {(step === 'countries_streaming' || step === 'deep_dive' || step === 'done') && countriesText && (
         <ReportSectionCard
           title={TARGET_COUNTRIES_SECTION.title}
           text={countriesText}
