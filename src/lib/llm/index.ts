@@ -6,7 +6,7 @@ const openrouter = createOpenAI({
   apiKey: process.env.OPENROUTER_API_KEY!,
   headers: {
     'HTTP-Referer': 'https://netport-ihracat-asistani.vercel.app',
-    'X-Title': 'Netport İhracat Asistanı',
+    'X-Title': 'Netport Ihracat Asistani',
   },
 })
 
