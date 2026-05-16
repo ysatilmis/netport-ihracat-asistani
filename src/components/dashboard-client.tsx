@@ -5,6 +5,7 @@ import { ReportProgress } from './report-progress'
 import { ReportView } from './report-view'
 import { ReportSection as ReportSectionCard } from './report-section'
 import { CountryChooser } from './country-chooser'
+import { SearchingAnimation } from './searching-animation'
 import { DEEP_DIVE_SECTIONS, TARGET_COUNTRIES_SECTION } from '@/lib/report-prompts'
 import type { CountryOption } from '@/lib/report-prompts'
 
@@ -262,6 +263,11 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
             Tekrar dene
           </button>
         </div>
+      )}
+
+      {/* Araştırma animasyonu — veri gelene kadar */}
+      {step === 'countries_streaming' && !countriesText && (
+        <SearchingAnimation />
       )}
 
       {/* Aşama 1 çıktısı — target_countries section'ı */}
