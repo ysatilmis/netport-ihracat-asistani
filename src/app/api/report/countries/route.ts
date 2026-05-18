@@ -5,6 +5,7 @@ import {
   TARGET_COUNTRIES_SECTION,
   extractCountries,
 } from '@/lib/report-prompts'
+import { extractCountriesWithClaude } from '@/lib/extract-countries-claude'
 
 export const maxDuration = 90
 
@@ -74,7 +75,16 @@ export async function POST(request: Request) {
 
         send({ type: 'section_done', section: section.key })
 
-        const countries = extractCountries(sectionText)
+        let countries = extractCountries(sectionText)
+        if (!countries || countries.length === 0) {
+          console.log('[Countries fallback] regex fail, Claude 2. pass devreye giriyor')
+          const claudeCountries = await extractCountriesWithClaude(sectionText)
+          if (claudeCountries && claudeCountries.length > 0) {
+            console.log('[Countries fallback] Claude basarili,', claudeCountries.length, 'ulke ayiklandi')
+            countries = claudeCountries
+          }
+        }
+
         if (countries && countries.length > 0) {
           send({ type: 'countries', countries, raw: sectionText })
         } else {

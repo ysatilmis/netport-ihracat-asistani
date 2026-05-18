@@ -105,7 +105,7 @@ export async function POST(request: Request) {
           let sectionText = ''
 
           try {
-            const result = await callLLMStream(section.model as LLMModel, prompt)
+            const result = await callLLMStream(section.model as LLMModel, prompt, section.maxTokens)
 
             for await (const textChunk of result.textStream) {
               sectionText += textChunk
@@ -134,6 +134,59 @@ export async function POST(request: Request) {
           if (!nextSection || nextSection.phase !== currentPhase) {
             send({ type: 'phase_done', phase: currentPhase })
           }
+        }
+
+        // Stream başarılı bittikten sonra raporu otomatik kaydet.
+        try {
+          const allSections: Record<string, { title: string; text: string; phase: number }> = {}
+
+          if (countriesContextText) {
+            allSections[TARGET_COUNTRIES_SECTION.key] = {
+              title: TARGET_COUNTRIES_SECTION.title,
+              text: countriesContextText,
+              phase: TARGET_COUNTRIES_SECTION.phase,
+            }
+          }
+
+          for (const section of DEEP_DIVE_SECTIONS) {
+            const prev = previousSections[section.key]
+            if (prev) {
+              allSections[section.key] = {
+                title: prev.title,
+                text: prev.text,
+                phase: section.phase,
+              }
+            }
+          }
+
+          const outputText = Object.values(allSections)
+            .map((s) => `## ${s.title}\n\n${s.text}`)
+            .join('\n\n---\n\n')
+
+          const insert = {
+            user_id: user.id,
+            phase: 0,
+            prompt_key: 'full_report',
+            input_json: { product: productClean, country: countryClean },
+            output_text: outputText,
+            report_sections: allSections,
+            is_full_report: true,
+          }
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data: saved, error: saveErr } = await (supabase.from('reports') as any)
+            .insert(insert)
+            .select('id')
+            .single()
+
+          if (saveErr) {
+            console.error('[report] auto-save error:', saveErr)
+          } else if (saved?.id) {
+            console.log('[report] auto-save ok, id:', saved.id)
+            send({ type: 'saved', id: saved.id })
+          }
+        } catch (saveErr) {
+          console.error('[report] auto-save exception:', saveErr)
         }
 
         send({ type: 'done', totalTokens, selectedCountry: countryClean })

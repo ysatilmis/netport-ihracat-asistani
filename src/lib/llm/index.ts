@@ -23,7 +23,7 @@ export interface LLMStreamResult {
   usage: Promise<{ totalTokens?: number } | undefined>
 }
 
-export function callLLMStream(model: LLMModel, prompt: string): LLMStreamResult {
+export function callLLMStream(model: LLMModel, prompt: string, maxTokens?: number): LLMStreamResult {
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) throw new Error('OPENROUTER_API_KEY eksik — Vercel > Settings > Env Vars kontrol edin')
 
@@ -37,6 +37,7 @@ export function callLLMStream(model: LLMModel, prompt: string): LLMStreamResult 
       model: openrouter(modelId),
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
+      ...(maxTokens ? { maxTokens } : {}),
     })
 
     const textStream = (async function* () {
@@ -59,6 +60,7 @@ export function callLLMStream(model: LLMModel, prompt: string): LLMStreamResult 
     model: openrouter(modelId),
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.3,
+    ...(maxTokens ? { maxTokens } : {}),
     onError: ({ error }) => {
       console.error('[LLM stream error]', modelId, error)
     },
