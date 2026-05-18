@@ -1,5 +1,6 @@
 import { getReports } from '@/actions/reports'
 import Link from 'next/link'
+import { ReportRowActions } from '@/components/report-row-actions'
 
 export default async function ResultsPage() {
   const reports = await getReports()
@@ -77,10 +78,11 @@ export default async function ResultsPage() {
           const isFull = r.is_full_report
 
           return (
-            <li key={r.id}>
+            <li key={r.id} className="relative">
+              <ReportRowActions reportId={r.id} reportTitle={title} />
               <Link
                 href={`/results/${r.id}`}
-                className="group block h-full rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5"
+                className="group block h-full rounded-2xl border border-slate-200 bg-white p-5 pr-12 transition-all hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5"
               >
                 <div className="flex items-center justify-between mb-2 gap-2">
                   <span

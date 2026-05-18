@@ -40,6 +40,21 @@ export async function getReports(): Promise<ReportRow[]> {
   return data ?? []
 }
 
+export async function deleteReport(reportId: string): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Yetkisiz')
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from('reports') as any)
+    .delete()
+    .eq('id', reportId)
+    .eq('user_id', user.id)
+
+  if (error) throw new Error(`Rapor silinemedi: ${error.message}`)
+  revalidatePath('/results')
+}
+
 export async function saveFullReport(data: {
   product: string
   country: string
