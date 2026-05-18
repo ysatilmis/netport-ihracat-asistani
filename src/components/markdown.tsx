@@ -18,19 +18,26 @@ function unwrapTablesInCodeFences(input: string): string {
   )
 }
 
+function styleKaynakCitations(input: string): string {
+  return input.replace(
+    /\[Kaynak:\s*([^\]]+)\]/g,
+    (_, citation: string) => `*[Kaynak: ${citation.trim()}]*`,
+  )
+}
+
 export function Markdown({ children }: MarkdownProps) {
-  const cleaned = unwrapTablesInCodeFences(children)
+  const cleaned = styleKaynakCitations(unwrapTablesInCodeFences(children))
   return (
     <div
       className="prose prose-slate max-w-none
         prose-headings:font-semibold prose-headings:tracking-tight
         prose-h1:text-2xl prose-h1:text-slate-900 prose-h1:mt-6 prose-h1:mb-3
-        prose-h2:text-xl prose-h2:text-slate-900 prose-h2:mt-5 prose-h2:mb-2.5
-        prose-h3:text-lg prose-h3:text-slate-800 prose-h3:mt-4 prose-h3:mb-2
+        prose-h2:text-xl prose-h2:text-[var(--primary)] prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-1 prose-h2:mt-6 prose-h2:mb-3
+        prose-h3:text-lg prose-h3:text-slate-800 prose-h3:font-bold prose-h3:mt-4 prose-h3:mb-2
         prose-h4:text-base prose-h4:text-slate-700 prose-h4:mt-3 prose-h4:mb-1.5
-        prose-p:my-2.5 prose-p:leading-7 prose-p:text-slate-800
+        prose-p:my-2.5 prose-p:leading-7 prose-p:text-slate-700
         prose-strong:text-[var(--primary)] prose-strong:font-semibold
-        prose-em:text-slate-700
+        prose-em:text-slate-500 prose-em:text-sm prose-em:font-normal
         prose-a:text-blue-700 prose-a:no-underline hover:prose-a:underline
         prose-ul:my-2.5 prose-ol:my-2.5 prose-li:my-1 prose-li:leading-7
         prose-li:marker:text-slate-400

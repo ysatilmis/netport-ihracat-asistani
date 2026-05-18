@@ -63,7 +63,7 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
           </h1>
         </div>
         <p className="ml-4 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-          1) Ürününü yaz, AI 3 hedef pazar önersin. 2) Birini seç. 3) O ülke için 10 bölümlük zincirleme analiz akar.
+          1) Ürününü yaz. 2) AI en uygun 3 ihracat pazarını önerir — büyüklük + neden uygun. 3) Seç → o ülke için 10 bölümlük analiz üretilir.
         </p>
       </div>
 
