@@ -9,6 +9,7 @@ interface AppNavProps {
 const LINKS = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/results', label: 'Raporlarım' },
+  { href: '/pricing', label: 'Fiyatlandırma' },
 ]
 
 export function AppNav({ signalCount = 0 }: AppNavProps) {

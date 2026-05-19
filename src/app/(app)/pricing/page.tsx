@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { REPORT_PACK, PLAN_REPORT_LIMITS } from '@/lib/stripe'
 import { getMonthlyUsage } from '@/lib/token'
+import { iyzicoConfigured } from '@/lib/iyzico'
+import { IyzicoCheckoutButton } from '@/components/iyzico-checkout-button'
 import { Check } from 'lucide-react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
@@ -137,8 +139,17 @@ export default async function PricingPage() {
               ))}
             </ul>
 
-            {/* CTA — Iyzico geliştirme aşamasında, şimdilik WhatsApp manuel akış */}
-            {user ? (
+            {/* CTA — Iyzico hazırsa kartla öde butonu, değilse WhatsApp fallback */}
+            {!user ? (
+              <Link
+                href="/register"
+                className="block w-full text-center px-6 py-4 rounded-xl bg-gradient-to-br from-[var(--accent)] to-red-600 text-white font-semibold text-base shadow-[0_4px_16px_rgba(232,86,10,0.25)] hover:shadow-[0_6px_24px_rgba(232,86,10,0.35)] hover:-translate-y-0.5 transition-all"
+              >
+                Önce Kayıt Ol
+              </Link>
+            ) : iyzicoConfigured ? (
+              <IyzicoCheckoutButton priceTry={REPORT_PACK.priceTry} />
+            ) : (
               <a
                 href={WHATSAPP_URL}
                 target="_blank"
@@ -150,19 +161,14 @@ export default async function PricingPage() {
                   <span aria-hidden>→</span>
                 </span>
               </a>
-            ) : (
-              <Link
-                href="/register"
-                className="block w-full text-center px-6 py-4 rounded-xl bg-gradient-to-br from-[var(--accent)] to-red-600 text-white font-semibold text-base shadow-[0_4px_16px_rgba(232,86,10,0.25)] hover:shadow-[0_6px_24px_rgba(232,86,10,0.35)] hover:-translate-y-0.5 transition-all"
-              >
-                Önce Kayıt Ol
-              </Link>
             )}
 
             <p className="text-center text-xs text-slate-400 mt-4">
-              {user
-                ? 'Ödeme şu an manuel — Iyzico kart ödemesi yakında entegre olacak'
-                : 'Kayıt ücretsiz, 3 rapor hakkın hemen aktif'}
+              {!user
+                ? 'Kayıt ücretsiz, 3 rapor hakkın hemen aktif'
+                : iyzicoConfigured
+                  ? 'Kartla güvenli ödeme — 3D Secure korumalı'
+                  : 'Ödeme şu an manuel — Iyzico kart ödemesi yakında entegre olacak'}
             </p>
           </div>
         </div>
