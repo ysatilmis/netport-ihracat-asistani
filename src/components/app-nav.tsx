@@ -27,8 +27,8 @@ export function AppNav({ signalCount = 0 }: AppNavProps) {
             href={link.href}
             className={`px-3 py-1.5 rounded-md font-medium transition-colors inline-flex items-center gap-1.5 ${
               isActive
-                ? 'bg-white/15 text-white'
-                : 'text-white/70 hover:text-white hover:bg-white/10'
+                ? 'bg-slate-900 text-white'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
             aria-current={isActive ? 'page' : undefined}
           >

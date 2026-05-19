@@ -5,14 +5,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--primary)' }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center mb-3 bg-white rounded-2xl shadow-lg px-10 py-5">
+          <div className="inline-flex items-center mb-4 bg-white rounded-2xl shadow-2xl px-10 py-6">
             <Image
               src="/netport-logo.png"
               alt="Netport"
               width={400}
               height={400}
               priority
-              className="h-32 w-auto object-contain"
+              className="h-28 w-auto object-contain"
             />
           </div>
           <div className="inline-flex items-center gap-2 mb-1">

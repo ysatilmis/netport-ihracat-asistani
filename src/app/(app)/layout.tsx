@@ -16,15 +16,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
-      <header
-        className="border-b border-white/5"
-        style={{ backgroundColor: 'var(--primary)' }}
-      >
+      <header className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto flex items-center justify-between h-20 px-6">
           <div className="flex items-center gap-6">
             <Link
               href="/dashboard"
-              className="group flex items-center bg-white rounded-xl shadow-sm transition-all hover:shadow-md hover:scale-[1.02] px-5 py-2"
+              className="group flex items-center transition-transform hover:scale-[1.02]"
               aria-label="Netport ana sayfa"
             >
               <Image
@@ -46,7 +43,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <form action={signOut}>
               <button
                 type="submit"
-                className="text-sm text-white/70 hover:text-white transition-colors px-2 py-1"
+                className="text-sm text-slate-600 hover:text-slate-900 transition-colors px-2 py-1"
               >
                 Çıkış
               </button>
