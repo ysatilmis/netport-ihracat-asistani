@@ -35,50 +35,55 @@ export function CountryChooser({ countries, product, onPick, disabled }: Country
           const scorePct = (score / 10) * 100
           const isPrimary = idx === 0
 
+          const ribbonGradient = isPrimary
+            ? 'linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%)'
+            : 'linear-gradient(90deg, var(--phase-1), #60A5FA)'
+
           return (
             <article
               key={c.name}
-              className={`group relative flex flex-col rounded-2xl border bg-white p-5 transition-all hover:-translate-y-1 hover:shadow-lg overflow-hidden ${
+              className={`group relative flex flex-col rounded-2xl border bg-white p-6 pt-7 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_36px_rgba(0,0,0,0.08)] overflow-hidden ${
                 isPrimary
-                  ? 'border-[var(--accent)]/30 ring-2 ring-[var(--accent)]/15 shadow-sm'
-                  : 'border-slate-200 shadow-sm'
+                  ? 'border-[var(--accent)]/40 ring-2 ring-[var(--accent)]/15 shadow-[0_4px_24px_rgba(232,86,10,0.08)]'
+                  : 'border-slate-200 shadow-[0_1px_2px_rgba(16,24,40,0.04)]'
               }`}
             >
-              {isPrimary && (
-                <div
-                  className="absolute top-0 left-0 right-0 h-1"
-                  style={{ background: 'linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%)' }}
-                  aria-hidden
-                />
-              )}
+              <div
+                className="absolute top-0 left-0 right-0 h-1.5"
+                style={{ background: ribbonGradient }}
+                aria-hidden
+              />
               {/* Rank + score */}
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-4">
                 <span
-                  className="text-[11px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full inline-flex items-center gap-1"
+                  className="text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full inline-flex items-center gap-1.5"
                   style={{ backgroundColor: rank.badgeBg, color: rank.badgeFg }}
                 >
-                  <span aria-hidden>{rank.emoji}</span>
+                  <span aria-hidden className="text-base">{rank.emoji}</span>
                   {rank.label}
                 </span>
-                <span className="text-sm font-semibold text-slate-700 tabular-nums">
+                <span className="text-sm font-semibold text-slate-700 tabular-nums font-mono">
                   {score}
                   <span className="text-slate-400 text-xs">/10</span>
                 </span>
               </div>
 
               {/* Country name */}
-              <h4 className="text-xl font-bold text-slate-900 mb-2 leading-tight">
+              <h4 className="text-2xl font-bold text-slate-900 mb-3 leading-tight tracking-tight">
                 {c.name}
               </h4>
 
               {/* Score bar */}
-              <div className="mb-3" aria-label={`Skor ${score} / 10`}>
-                <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+              <div className="mb-4" aria-label={`Skor ${score} / 10`}>
+                <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all"
                     style={{
                       width: `${scorePct}%`,
-                      backgroundColor: isPrimary ? 'var(--primary)' : '#64748B',
+                      background: isPrimary
+                        ? 'linear-gradient(90deg, var(--accent), var(--primary))'
+                        : 'linear-gradient(90deg, #94A3B8, #64748B)',
+                      boxShadow: isPrimary ? 'inset 0 0 4px rgba(255,255,255,0.3)' : undefined,
                     }}
                   />
                 </div>

@@ -63,13 +63,12 @@ export function Markdown({ children }: MarkdownProps) {
         prose-h3:before:content-[''] prose-h3:before:inline-block prose-h3:before:w-1 prose-h3:before:h-5 prose-h3:before:bg-[var(--accent,#f97316)] prose-h3:before:mr-2 prose-h3:before:align-middle prose-h3:before:rounded
         prose-h4:text-base prose-h4:text-[var(--primary)] prose-h4:font-semibold prose-h4:mt-4 prose-h4:mb-1.5
         prose-p:my-2.5 prose-p:leading-7 prose-p:text-slate-700
-        prose-strong:text-[var(--primary)] prose-strong:font-semibold
+        prose-strong:text-slate-900 prose-strong:font-semibold prose-strong:bg-[var(--p3-bg)] prose-strong:px-1 prose-strong:rounded-sm
         prose-em:text-slate-500 prose-em:text-sm prose-em:font-normal
         prose-a:text-[var(--primary)] prose-a:no-underline prose-a:font-medium hover:prose-a:underline hover:prose-a:text-[var(--accent,#f97316)]
-        prose-ul:my-2.5 prose-ol:my-2.5 prose-li:my-1 prose-li:leading-7
-        prose-li:marker:text-[var(--accent,#f97316)]
-        prose-blockquote:border-l-4 prose-blockquote:border-[var(--accent,#f97316)]
-        prose-blockquote:pl-4 prose-blockquote:text-slate-600 prose-blockquote:italic prose-blockquote:bg-slate-50 prose-blockquote:py-2 prose-blockquote:rounded-r
+        prose-ul:my-2.5 prose-ul:list-none prose-ul:pl-0 prose-ol:my-2.5 prose-li:my-1 prose-li:leading-7
+        prose-blockquote:border-l-4 prose-blockquote:border-[var(--p1-line)]
+        prose-blockquote:pl-4 prose-blockquote:text-slate-700 prose-blockquote:not-italic prose-blockquote:bg-[var(--p1-bg)] prose-blockquote:py-3 prose-blockquote:rounded-xl prose-blockquote:my-4
         prose-code:text-[0.875em] prose-code:bg-slate-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
         prose-code:before:content-none prose-code:after:content-none prose-code:font-normal
         prose-pre:bg-slate-50 prose-pre:border prose-pre:border-slate-200
@@ -79,6 +78,37 @@ export function Markdown({ children }: MarkdownProps) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
+          li: ({ children, ...props }) => (
+            <li className="pl-7 relative my-1.5 leading-7" {...props}>
+              <span aria-hidden className="absolute left-1 top-0.5 text-[#10B981] font-bold">✓</span>
+              <span>{children}</span>
+            </li>
+          ),
+          a: ({ children, href, ...props }) => {
+            // styleKaynakCitations output'u: [*[Kaynak: label]*](url)
+            // ReactMarkdown render'da children içinde <em>[Kaynak: ...]</em> olur
+            const text = JSON.stringify(children)
+            const isKaynak = text.includes('[Kaynak:') || text.includes('Kaynak:')
+            if (isKaynak && href) {
+              return (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-baseline gap-1 px-1.5 py-0.5 bg-[var(--p1-bg)] text-[var(--p1-fg)] hover:bg-[var(--primary)] hover:text-white rounded-md text-[0.85em] no-underline align-baseline transition-colors border border-[var(--p1-line)] hover:border-[var(--primary)]"
+                  {...props}
+                >
+                  <span className="text-[0.75em]" aria-hidden>🔗</span>
+                  <span className="not-italic">{children}</span>
+                </a>
+              )
+            }
+            return (
+              <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+                {children}
+              </a>
+            )
+          },
           pre: ({ children, ...props }) => (
             <pre
               className="my-4 p-4 rounded-lg bg-slate-900 border border-slate-800 overflow-x-auto text-sm leading-6"

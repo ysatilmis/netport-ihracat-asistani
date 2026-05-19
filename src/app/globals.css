@@ -103,6 +103,17 @@
   --phase-2: #16A34A; /* yeşil 600 — Konumlandırma */
   --phase-3: #EA580C; /* turuncu 600 — İlk Temas */
   --phase-4: #9333EA; /* mor 600 — Yönetim Özeti */
+
+  /* V3 Notion/Stripe pastel phase backgrounds (2026-05-19 Yüksel redesign) */
+  --p1-bg: #EFF6FF; --p1-line: #BFDBFE;
+  --p2-bg: #ECFDF5; --p2-line: #A7F3D0;
+  --p3-bg: #FFFBEB; --p3-line: #FDE68A;
+  --p4-bg: #F5F3FF; --p4-line: #DDD6FE;
+  --p1-fg: #1E40AF; --p2-fg: #065F46; --p3-fg: #92400E; --p4-fg: #5B21B6;
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, #FFF7ED 0%, #FEF3F2 40%, #F5F3FF 100%);
 }
 
 .dark {

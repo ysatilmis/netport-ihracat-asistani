@@ -55,23 +55,34 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
 
   return (
     <div>
-      {/* Hero */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-1 h-8 rounded-full" style={{ backgroundColor: 'var(--accent)' }} />
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
-            İhracat Raporu Oluştur
-          </h1>
+      {/* V3 Hero gradient banner */}
+      <div className="hero-gradient -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-10 md:py-14 mb-8 border-b border-slate-200/60">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-mono text-slate-600 mb-5 shadow-sm">
+          <span aria-hidden>🎯</span>
+          <span>İhracat Pazar Analizi</span>
         </div>
-        <p className="ml-4 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-          1) Ürününü yaz. 2) AI en uygun 3 ihracat pazarını önerir — büyüklük + neden uygun. 3) Seç → o ülke için 10 bölümlük analiz üretilir.
+        <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-3 md:mb-4 leading-[1.08]">
+          {reportProduct ? (
+            <>
+              <span className="bg-gradient-to-r from-[var(--accent)] to-red-600 bg-clip-text text-transparent">
+                {reportProduct}
+              </span>{' '}
+              için ihracat raporu
+            </>
+          ) : (
+            <>İhracat raporunu <span className="bg-gradient-to-r from-[var(--accent)] to-red-600 bg-clip-text text-transparent">3 dakikada</span> çıkar</>
+          )}
+        </h1>
+        <p className="text-sm md:text-base text-slate-600 max-w-2xl leading-relaxed">
+          1) Ürününü yaz. 2) AI en uygun 3 ihracat pazarını önerir — büyüklük + neden uygun.
+          3) Seç → o ülke için 10 bölümlük zincirleme analiz akar.
         </p>
       </div>
 
       {/* Akış göstergesi — stream devam ediyorsa sayfaya tekrar girince sahnede kalsın */}
       {isLoading && (
-        <div className="max-w-xl mb-6 p-3 rounded-xl bg-blue-50 border border-blue-200 text-sm text-blue-800 flex items-center gap-2">
-          <span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+        <div className="max-w-xl mb-6 p-3 rounded-xl bg-[var(--p1-bg)] border border-[var(--p1-line)] text-sm text-[var(--p1-fg)] flex items-center gap-2">
+          <span className="inline-block w-2 h-2 rounded-full bg-[var(--phase-1)] animate-pulse" />
           <span>Rapor üretiliyor — sayfayı değiştirsen bile arka planda devam eder.</span>
         </div>
       )}
