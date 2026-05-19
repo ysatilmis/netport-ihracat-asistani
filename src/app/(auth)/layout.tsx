@@ -5,18 +5,21 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--primary)' }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-4 mb-3 bg-white rounded-2xl shadow-lg px-8 py-4">
+          <div className="inline-flex items-center mb-3 bg-white rounded-2xl shadow-lg px-10 py-5">
             <Image
               src="/netport-logo.png"
               alt="Netport"
               width={400}
               height={400}
               priority
-              className="h-24 w-24 object-contain"
+              className="h-32 w-auto object-contain"
             />
-            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-mono font-bold uppercase tracking-wider bg-[var(--accent)] text-white shadow-sm">
+          </div>
+          <div className="inline-flex items-center gap-2 mb-1">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-mono font-bold uppercase tracking-wider bg-[var(--accent)] text-white shadow-sm">
               AI
             </span>
+            <span className="text-xs uppercase tracking-wider text-blue-200/80 font-semibold">İhracat Asistanı</span>
           </div>
           <p className="text-sm text-blue-200">İhracat Asistanı — Yapay Zeka Destekli Pazar Analizi</p>
         </div>
