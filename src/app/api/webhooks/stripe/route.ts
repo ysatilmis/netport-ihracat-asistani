@@ -63,13 +63,13 @@ export async function POST(req: NextRequest) {
         // Subscription alımı (default).
         const tier = session.metadata?.tier ?? 'starter'
         const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id
-        const tierLimits: Record<string, number> = { starter: 25000, pro: 100000, free: 5000 }
+        const tierLimits: Record<string, number> = { starter: 250000, pro: 500000, free: 80000 }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase.from('subscriptions') as any).upsert({
           user_id: userId,
           plan: tier,
-          monthly_limit_tokens: tierLimits[tier] ?? 25000,
+          monthly_limit_tokens: tierLimits[tier] ?? 250000,
           current_period_start: new Date().toISOString().slice(0, 10),
           current_period_end: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().slice(0, 10),
           stripe_customer_id: customerId ?? null,
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase.from('subscriptions') as any).update({
           plan: 'free',
-          monthly_limit_tokens: 5000,
+          monthly_limit_tokens: 80000,
         }).eq('stripe_subscription_id', sub.id)
 
         console.log('[stripe webhook] Subscription cancelled → free', sub.id)

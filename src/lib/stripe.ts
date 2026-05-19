@@ -30,21 +30,21 @@ export type TokenPackSize = keyof typeof TOKEN_PACKS
 export const PLANS = {
   free: {
     name: 'Ücretsiz',
-    tokens: 5000,
+    tokens: 80000,
     price: 0,
     priceId: null,
-    features: ['1 tam rapor/ay', 'Temel ülke analizi', 'Sonuçları görüntüleme'],
+    features: ['3 tam rapor/ay', 'Temel ülke analizi', 'Sonuçları görüntüleme'],
   },
   starter: {
     name: 'Starter',
-    tokens: 25000,
+    tokens: 250000,
     price: 29,
     priceId: STRIPE_PRICES.starter,
-    features: ['5 tam rapor/ay', 'Tüm analiz aşamaları', 'PDF indirme', 'E-posta desteği'],
+    features: ['10 tam rapor/ay', 'Tüm analiz aşamaları', 'PDF indirme', 'E-posta desteği'],
   },
   pro: {
     name: 'Pro',
-    tokens: 100000,
+    tokens: 500000,
     price: 79,
     priceId: STRIPE_PRICES.pro,
     features: ['Sınırsız rapor', 'Öncelikli analiz', 'Özel prompt', 'Telefon desteği', 'CSV export'],
@@ -52,3 +52,5 @@ export const PLANS = {
 } as const
 
 export type PlanTier = keyof typeof PLANS
+
+export const ESTIMATED_TOKENS_PER_REPORT = 25000
