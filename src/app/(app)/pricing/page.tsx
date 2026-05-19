@@ -1,183 +1,196 @@
 import { createClient } from '@/lib/supabase/server'
-import { PLANS, TOKEN_PACKS } from '@/lib/stripe'
-import { createCheckoutSession, createTokenPackCheckout } from '@/actions/stripe'
-import { Button, buttonVariants } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { REPORT_PACK, PLAN_REPORT_LIMITS } from '@/lib/stripe'
+import { getMonthlyUsage } from '@/lib/token'
 import { Check } from 'lucide-react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import type { PlanTier, TokenPackSize } from '@/lib/stripe'
 
 export const metadata: Metadata = {
   title: 'Fiyatlandırma — Netport İhracat Asistanı',
 }
 
+// WhatsApp manuel ödeme akışı — Iyzico entegrasyonu canlıya gelene kadar geçici.
+const WHATSAPP_NUMBER = '905069003820'
+const WHATSAPP_MESSAGE = encodeURIComponent(
+  'Merhaba, Netport için 3 ek rapor paketi (₺499) satın almak istiyorum.',
+)
+const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`
+
 export default async function PricingPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  let currentPlan: PlanTier = 'free'
+  let used = 0
+  let limit = PLAN_REPORT_LIMITS.free
+  let remaining = limit
   if (user) {
-    const { data: sub } = await supabase
-      .from('subscriptions')
-      .select('plan')
-      .eq('user_id', user.id)
-      .single() as { data: { plan: string } | null; error: unknown }
-    if (sub?.plan && ['free', 'starter', 'pro'].includes(sub.plan)) {
-      currentPlan = sub.plan as PlanTier
+    try {
+      const usage = await getMonthlyUsage(user.id)
+      used = usage.used
+      limit = usage.limit
+      remaining = limit < 0 ? Number.POSITIVE_INFINITY : Math.max(0, limit - used)
+    } catch {
+      // subscription not found yet
     }
   }
 
-  const tiers: PlanTier[] = ['free', 'starter', 'pro']
-
   return (
-    <main className="max-w-5xl mx-auto px-4 py-12">
-      <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Fiyatlandırma</h1>
-        <p className="text-gray-500">
-          İhracat araştırmanızı büyütün. İhtiyacınıza uygun planı seçin.
+    <main className="max-w-4xl mx-auto px-4 py-12 md:py-16">
+      {/* Hero */}
+      <div className="text-center mb-12">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-mono text-slate-600 mb-5 shadow-sm">
+          <span aria-hidden>💼</span>
+          <span>Fiyatlandırma</span>
+        </div>
+        <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-3 leading-[1.08]">
+          Aylık <span className="bg-gradient-to-r from-[var(--accent)] to-red-600 bg-clip-text text-transparent">3 rapor ücretsiz</span>.
+          <br className="hidden md:block" />
+          Daha fazlası mı? Pack alırsın.
+        </h1>
+        <p className="text-base text-slate-600 max-w-xl mx-auto leading-relaxed">
+          Karmaşık plan yok. Her ay 3 tam ihracat raporu hakkın var. Bittiyse 3'lük paket satın al.
+          Mevcut periyodun sonuna kadar kullanılır.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        {tiers.map((tier) => {
-          const plan = PLANS[tier]
-          const isCurrent = currentPlan === tier
-
-          return (
-            <Card key={tier} className={tier === 'pro' ? 'border-blue-500 ring-1 ring-blue-500' : ''}>
-              <CardHeader>
-                <CardTitle className="flex justify-between items-center">
-                  {plan.name}
-                  {isCurrent && (
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                      Mevcut
-                    </span>
-                  )}
-                </CardTitle>
-                <div className="mt-2">
-                  <span className="text-3xl font-bold">
-                    {plan.price === 0 ? 'Ücretsiz' : `$${plan.price}`}
-                  </span>
-                  {plan.price > 0 && <span className="text-gray-400 text-sm">/ay</span>}
-                </div>
-                <p className="text-sm text-gray-500">{plan.tokens.toLocaleString('tr')} token/ay</p>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm">
-                      <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-              <CardFooter>
-                {tier === 'free' ? (
-                  <Link
-                    href={user ? '/dashboard' : '/register'}
-                    className={buttonVariants({ variant: 'outline', className: 'w-full' })}
-                  >
-                    {user ? 'Dashboard\'a Git' : 'Başla'}
-                  </Link>
-                ) : isCurrent ? (
-                  <Button variant="outline" className="w-full" disabled>
-                    Mevcut Plan
-                  </Button>
-                ) : user ? (
-                  <form action={createCheckoutSession.bind(null, tier)} className="w-full">
-                    <Button className="w-full" type="submit">
-                      {tier === 'pro' ? 'Pro\'ya Geç' : 'Starter\'a Geç'}
-                    </Button>
-                  </form>
-                ) : (
-                  <Link
-                    href={`/register?plan=${tier}`}
-                    className={buttonVariants({ className: 'w-full' })}
-                  >
-                    Kayıt Ol
-                  </Link>
-                )}
-              </CardFooter>
-            </Card>
-          )
-        })}
-      </div>
-
-      {/* Token Top-up Packs — tek seferlik ek token alımı */}
-      <div className="border-t border-gray-200 pt-12">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Ek Token Paketleri
-          </h2>
-          <p className="text-gray-500 text-sm">
-            Plan yükseltmek istemiyor musun? Tek seferlik ek token al — abonelik yok, aylık limit yerine sayılır.
+      {/* Mevcut durum (logged in) */}
+      {user && (
+        <div className="mb-10 rounded-2xl bg-white border border-slate-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6">
+          <div className="flex items-baseline justify-between flex-wrap gap-3 mb-3">
+            <h2 className="text-lg font-semibold text-slate-900">Mevcut Durum</h2>
+            <span className="text-sm text-slate-500 font-mono">
+              {limit < 0 ? 'Sınırsız (Pro)' : `${used} / ${limit} rapor`}
+            </span>
+          </div>
+          {limit > 0 && (
+            <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden mb-3">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${Math.min(100, (used / limit) * 100)}%`,
+                  background:
+                    remaining === 0
+                      ? 'linear-gradient(90deg, #EF4444, #DC2626)'
+                      : remaining <= 1
+                        ? 'linear-gradient(90deg, #F59E0B, #D97706)'
+                        : 'linear-gradient(90deg, var(--accent), var(--primary))',
+                }}
+              />
+            </div>
+          )}
+          <p className="text-sm text-slate-600">
+            {remaining === 0 ? (
+              <>
+                <span className="font-semibold text-red-600">Aylık hakkın bitti.</span> Ek 3 rapor için aşağıdaki paketi al.
+              </>
+            ) : remaining <= 1 ? (
+              <>
+                <span className="font-semibold text-amber-700">{remaining} rapor hakkın kaldı.</span> Yetmezse aşağıdaki paketi al.
+              </>
+            ) : (
+              <>
+                <span className="font-semibold text-emerald-700">{remaining === Number.POSITIVE_INFINITY ? 'Sınırsız' : remaining} rapor</span> hakkın var.
+              </>
+            )}
           </p>
         </div>
+      )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          {(Object.entries(TOKEN_PACKS) as [TokenPackSize, typeof TOKEN_PACKS[TokenPackSize]][]).map(([size, pack]) => {
-            const hasPriceId = Boolean(pack.priceId)
-            return (
-              <Card key={size} className={size === 'medium' ? 'border-amber-400 ring-1 ring-amber-300' : ''}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{pack.label}</span>
-                    {size === 'medium' && (
-                      <span className="text-[10px] font-semibold uppercase tracking-wider bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                        Popüler
-                      </span>
-                    )}
-                  </CardTitle>
-                  <div className="mt-2">
-                    <span className="text-3xl font-bold">${pack.price}</span>
-                    <span className="text-gray-400 text-sm ml-2">tek seferlik</span>
-                  </div>
-                  <p className="text-sm text-gray-500">
-                    {pack.tokens.toLocaleString('tr')} ek token
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                      Bir kerelik ödeme — abonelik yok
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                      Aylık limite ek olarak kullanılabilir
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                      Süresiz — kullanana kadar bekler
-                    </li>
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  {!user ? (
-                    <Link
-                      href="/register"
-                      className={buttonVariants({ variant: 'outline', className: 'w-full' })}
-                    >
-                      Giriş Yap
-                    </Link>
-                  ) : !hasPriceId ? (
-                    <Button variant="outline" className="w-full" disabled title="Yakında">
-                      Yakında
-                    </Button>
-                  ) : (
-                    <form action={createTokenPackCheckout.bind(null, size)} className="w-full">
-                      <Button className="w-full" type="submit">
-                        Satın Al
-                      </Button>
-                    </form>
-                  )}
-                </CardFooter>
-              </Card>
-            )
-          })}
+      {/* Tek paket — Notion/Stripe V3 stil */}
+      <div className="mb-10">
+        <div className="rounded-3xl bg-white border-2 border-[var(--accent)]/30 ring-2 ring-[var(--accent)]/15 shadow-[0_8px_32px_rgba(232,86,10,0.12)] overflow-hidden relative">
+          {/* Gradient ribbon */}
+          <div
+            className="h-2 w-full"
+            style={{ background: 'linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%)' }}
+            aria-hidden
+          />
+
+          <div className="p-8 md:p-10">
+            <div className="flex items-baseline justify-between flex-wrap gap-3 mb-2">
+              <h3 className="text-2xl font-bold text-slate-900 tracking-tight">{REPORT_PACK.label}</h3>
+              <span className="text-[11px] font-mono font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20">
+                Tek Seferlik
+              </span>
+            </div>
+
+            <div className="mb-6">
+              <span className="text-5xl md:text-6xl font-bold text-slate-900 tracking-tight">₺{REPORT_PACK.priceTry}</span>
+              <span className="text-lg text-slate-400 ml-3 font-mono">·  {REPORT_PACK.reports} rapor</span>
+            </div>
+
+            <p className="text-base text-slate-600 mb-6 leading-relaxed">{REPORT_PACK.description}</p>
+
+            <ul className="space-y-3 mb-8">
+              {[
+                '3 tam ihracat pazar raporu',
+                'Aylık hakkına ek olarak çalışır',
+                'Tek seferlik — abonelik yok',
+                'Mevcut periyod boyunca geçerli',
+              ].map((feat) => (
+                <li key={feat} className="flex items-start gap-3 text-sm text-slate-700">
+                  <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+                    <Check className="h-3 w-3 text-emerald-600" strokeWidth={3} />
+                  </span>
+                  <span className="leading-snug">{feat}</span>
+                </li>
+              ))}
+            </ul>
+
+            {/* CTA — Iyzico geliştirme aşamasında, şimdilik WhatsApp manuel akış */}
+            {user ? (
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center px-6 py-4 rounded-xl bg-gradient-to-br from-[var(--accent)] to-red-600 text-white font-semibold text-base shadow-[0_4px_16px_rgba(232,86,10,0.25)] hover:shadow-[0_6px_24px_rgba(232,86,10,0.35)] hover:-translate-y-0.5 transition-all"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <span>WhatsApp ile İletişim</span>
+                  <span aria-hidden>→</span>
+                </span>
+              </a>
+            ) : (
+              <Link
+                href="/register"
+                className="block w-full text-center px-6 py-4 rounded-xl bg-gradient-to-br from-[var(--accent)] to-red-600 text-white font-semibold text-base shadow-[0_4px_16px_rgba(232,86,10,0.25)] hover:shadow-[0_6px_24px_rgba(232,86,10,0.35)] hover:-translate-y-0.5 transition-all"
+              >
+                Önce Kayıt Ol
+              </Link>
+            )}
+
+            <p className="text-center text-xs text-slate-400 mt-4">
+              {user
+                ? 'Ödeme şu an manuel — Iyzico kart ödemesi yakında entegre olacak'
+                : 'Kayıt ücretsiz, 3 rapor hakkın hemen aktif'}
+            </p>
+          </div>
         </div>
+      </div>
+
+      {/* Bilgi notu */}
+      <div className="rounded-2xl bg-[var(--p1-bg)] border border-[var(--p1-line)] p-5 mb-8">
+        <div className="flex gap-3 items-start">
+          <div className="text-2xl">💳</div>
+          <div className="flex-1">
+            <h4 className="text-sm font-semibold text-[var(--p1-fg)] mb-1">Ödeme yöntemleri yakında</h4>
+            <p className="text-sm text-slate-700 leading-relaxed">
+              Şu an satın alma WhatsApp üzerinden manuel kart ödemesi (Iyzico link) ile yapılıyor.
+              Kısa süre içinde kart ödemesi doğrudan siteye entegre olacak. Sorularınız için WhatsApp:{' '}
+              <a href={`https://wa.me/${WHATSAPP_NUMBER}`} className="font-medium text-[var(--primary)] hover:underline">
+                +90 506 900 38 20
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Pro plan placeholder */}
+      <div className="text-center text-sm text-slate-400">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-full">
+          <span aria-hidden>⏳</span>
+          <span>Aylık sınırsız (Pro) plan yakında</span>
+        </span>
       </div>
     </main>
   )
