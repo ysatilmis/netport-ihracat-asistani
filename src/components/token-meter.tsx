@@ -36,8 +36,8 @@ export async function TokenMeter({ userId }: TokenMeterProps) {
         title={`Bu ay ${used} rapor üretildi (pilot — sınırsız)`}
       >
         <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.6)]" aria-hidden />
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-100">Pilot</span>
-        <span className="text-[11px] text-emerald-100/70 font-mono">· {used} rapor</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700">Pilot</span>
+        <span className="text-[11px] text-emerald-700/70 font-mono">· {used} rapor</span>
       </div>
     )
   }
@@ -50,8 +50,8 @@ export async function TokenMeter({ userId }: TokenMeterProps) {
         title={`Pro plan — sınırsız rapor`}
       >
         <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.6)]" aria-hidden />
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-100">Pro</span>
-        <span className="text-[11px] text-emerald-100/80 font-mono">· Sınırsız</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700">Pro</span>
+        <span className="text-[11px] text-emerald-700/80 font-mono">· Sınırsız</span>
       </div>
     )
   }
@@ -74,7 +74,7 @@ export async function TokenMeter({ userId }: TokenMeterProps) {
       ? 'shadow-[0_0_4px_rgba(251,191,36,0.6)]'
       : 'shadow-[0_0_4px_rgba(52,211,153,0.6)]'
   const barColor = isExhausted ? 'bg-red-400' : isWarning ? 'bg-amber-400' : 'bg-emerald-400'
-  const textColor = isExhausted ? 'text-red-100' : isWarning ? 'text-amber-100' : 'text-emerald-100/90'
+  const textColor = isExhausted ? 'text-red-700' : isWarning ? 'text-amber-700' : 'text-emerald-700'
 
   return (
     <div className="hidden sm:flex items-center gap-2">
@@ -90,13 +90,13 @@ export async function TokenMeter({ userId }: TokenMeterProps) {
               ? `🔥 ${remaining} rapor hakkın kaldı`
               : `${used} / ${limit} rapor`}
         </span>
-        <div className="w-12 h-1 rounded-full bg-white/15 overflow-hidden">
+        <div className="w-12 h-1 rounded-full bg-slate-200 overflow-hidden">
           <div
             className={`h-full ${barColor} transition-all`}
             style={{ width: `${pct}%` }}
           />
         </div>
-        <span className="text-[10px] text-white/60 tabular-nums font-mono">{plan === 'free' ? 'Free' : plan === 'starter' ? 'Starter' : 'Pro'}</span>
+        <span className="text-[10px] text-slate-500 tabular-nums font-mono">{plan === 'free' ? 'Free' : plan === 'starter' ? 'Starter' : 'Pro'}</span>
       </div>
       {(isWarning || isExhausted) && (
         <Link
