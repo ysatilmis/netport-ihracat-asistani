@@ -118,7 +118,20 @@ export async function POST(request: Request) {
             void recordTokenUsage(user.id, section.phase, section.key, tokens, section.model)
           } catch (sectionErr) {
             console.error(`[report] section ${section.key} failed:`, sectionErr)
-            const errMsg = `\n\n[Bu bölüm yüklenirken hata oluştu: ${(sectionErr as Error).message}]`
+            const rawMsg = (sectionErr as Error).message ?? ''
+            const isProviderLimit =
+              rawMsg.includes('Key limit exceeded') ||
+              rawMsg.includes('rate limit') ||
+              rawMsg.includes('Rate limit')
+            if (isProviderLimit) {
+              send({
+                type: 'error',
+                code: 'PROVIDER_LIMIT',
+                message: 'Servis şu an yoğun, lütfen birkaç dakika bekleyip tekrar deneyin.',
+              })
+              break
+            }
+            const errMsg = `\n\n[Bu bölüm yüklenirken hata oluştu: ${rawMsg}]`
             sectionText += errMsg
             send({ type: 'chunk', section: section.key, text: errMsg })
           }
@@ -192,7 +205,18 @@ export async function POST(request: Request) {
         send({ type: 'done', totalTokens, selectedCountry: countryClean })
       } catch (err) {
         console.error('[report] stream error:', err)
-        send({ type: 'error', message: (err as Error).message })
+        const rawMsg = (err as Error).message ?? ''
+        const isProviderLimit =
+          rawMsg.includes('Key limit exceeded') ||
+          rawMsg.includes('rate limit') ||
+          rawMsg.includes('Rate limit')
+        send({
+          type: 'error',
+          code: isProviderLimit ? 'PROVIDER_LIMIT' : undefined,
+          message: isProviderLimit
+            ? 'Servis şu an yoğun, lütfen birkaç dakika bekleyip tekrar deneyin.'
+            : rawMsg,
+        })
       } finally {
         controller.close()
       }

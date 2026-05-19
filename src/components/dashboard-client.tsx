@@ -31,6 +31,7 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
     step,
     isLoading,
     error,
+    errorCode,
     countriesText,
     countryOptions,
     sections,
@@ -87,7 +88,27 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
       )}
 
       {/* Error */}
-      {error && (
+      {error && errorCode === 'PROVIDER_LIMIT' && (
+        <div className="max-w-xl mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
+          ⚠️ {error}
+          <button className="ml-3 underline text-amber-700 hover:text-amber-900" onClick={reset}>
+            Tekrar dene
+          </button>
+        </div>
+      )}
+      {error && errorCode === 'TOKEN_LIMIT_EXCEEDED' && (
+        <div className="max-w-xl mb-6 p-4 rounded-xl bg-blue-50 border border-blue-200 text-sm text-blue-800 flex items-center justify-between gap-3 flex-wrap">
+          <span>🔒 {error}</span>
+          <a
+            href="/pricing"
+            className="font-semibold text-white px-3 py-1.5 rounded-lg text-xs"
+            style={{ backgroundColor: 'var(--primary)' }}
+          >
+            Plan Yükselt →
+          </a>
+        </div>
+      )}
+      {error && !errorCode && (
         <div className="max-w-xl mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
           {error}
           <button className="ml-3 underline text-red-600 hover:text-red-800" onClick={reset}>

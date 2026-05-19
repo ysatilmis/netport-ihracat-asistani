@@ -16,15 +16,15 @@ export default async function PricingPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const currentPlan: PlanTier = 'free'
+  let currentPlan: PlanTier = 'free'
   if (user) {
     const { data: sub } = await supabase
       .from('subscriptions')
       .select('plan')
       .eq('user_id', user.id)
       .single() as { data: { plan: string } | null; error: unknown }
-    if (sub) {
-      // currentPlan inferred from subscription — kept simple for MVP
+    if (sub?.plan && ['free', 'starter', 'pro'].includes(sub.plan)) {
+      currentPlan = sub.plan as PlanTier
     }
   }
 

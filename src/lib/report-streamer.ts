@@ -10,6 +10,7 @@ export interface StreamerState {
   step: FlowStep
   isLoading: boolean
   error: string | null
+  errorCode?: string
   countriesText: string
   countryOptions: CountryOption[]
   sections: ReportState
@@ -28,6 +29,7 @@ function emptyState(): StreamerState {
     step: 'form',
     isLoading: false,
     error: null,
+    errorCode: undefined,
     countriesText: '',
     countryOptions: [],
     sections: {},
@@ -177,7 +179,7 @@ class ReportStreamer {
       })
 
       if (res.status === 429) {
-        this.setState({ error: 'Bu ay token limitiniz doldu.', step: 'form' })
+        this.setState({ error: 'Bu ay token limitiniz doldu.', errorCode: 'TOKEN_LIMIT_EXCEEDED', step: 'form' })
         return
       }
       if (!res.ok) {
@@ -208,6 +210,7 @@ class ReportStreamer {
               text?: string
               countries?: CountryOption[]
               message?: string
+              code?: string
             }
 
             if (event.type === 'chunk' && event.text) {
@@ -219,7 +222,7 @@ class ReportStreamer {
                 error: event.message ?? 'Ülke listesi ayıklanamadı.',
               })
             } else if (event.type === 'error' && event.message) {
-              this.setState({ error: event.message })
+              this.setState({ error: event.message, errorCode: event.code })
             }
           } catch {
             // skip malformed line
@@ -282,7 +285,7 @@ class ReportStreamer {
       })
 
       if (res.status === 429) {
-        this.setState({ error: 'Bu ay token limitiniz doldu.' })
+        this.setState({ error: 'Bu ay token limitiniz doldu.', errorCode: 'TOKEN_LIMIT_EXCEEDED' })
         return
       }
       if (!res.ok) {
@@ -313,6 +316,7 @@ class ReportStreamer {
               section?: string
               text?: string
               message?: string
+              code?: string
               id?: string
             }
 
@@ -355,7 +359,7 @@ class ReportStreamer {
             } else if (event.type === 'done') {
               this.setState({ step: 'done' })
             } else if (event.type === 'error' && event.message) {
-              this.setState({ error: event.message })
+              this.setState({ error: event.message, errorCode: event.code })
             }
           } catch {
             // skip

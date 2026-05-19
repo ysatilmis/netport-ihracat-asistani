@@ -50,8 +50,14 @@ export async function getMonthlyUsage(userId: string): Promise<{
   }
 }
 
-export async function checkTokenLimit(_userId: string): Promise<void> {
-  // Pilot aşaması — limit kontrolü kapalı. Ticari lansmanla aktif edilecek.
+export async function checkTokenLimit(userId: string): Promise<void> {
+  // Env flag ile kontrol edilir. ENFORCE_TOKEN_LIMITS=true olmadan no-op (pilot modu).
+  if (process.env.ENFORCE_TOKEN_LIMITS !== 'true') return
+
+  const { used, limit } = await getMonthlyUsage(userId)
+  if (isOverLimit(used, limit)) {
+    throw new Error('TOKEN_LIMIT_EXCEEDED')
+  }
 }
 
 export async function recordTokenUsage(
