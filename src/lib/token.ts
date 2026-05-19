@@ -25,9 +25,11 @@ export async function getMonthlyUsage(userId: string): Promise<{
     'tokens_used'
   >
 
+  // NOT: extra_tokens kolonu migration 013 ile eklenecek; uygulanana kadar
+  // SELECT'te yok ve limit = monthly_limit_tokens olarak çalışır.
   const { data: sub } = await supabase
     .from('subscriptions')
-    .select('monthly_limit_tokens, current_period_start, current_period_end, extra_tokens')
+    .select('monthly_limit_tokens, current_period_start, current_period_end')
     .eq('user_id', userId)
     .single() as { data: SubRow | null; error: unknown }
 

@@ -33,29 +33,34 @@ export async function POST(req: NextRequest) {
         }
 
         // Token paketi tek seferlik alımı — extra_tokens artır.
+        // Migration 013 uygulanana kadar try/catch ile sessiz fail.
         if (metaType === 'token_pack') {
           const tokensRaw = session.metadata?.tokens ?? '0'
           const tokensAdded = parseInt(tokensRaw, 10) || 0
 
           if (tokensAdded > 0) {
-            const { data: existing } = await supabase
-              .from('subscriptions')
-              .select('extra_tokens')
-              .eq('user_id', userId)
-              .single() as { data: { extra_tokens: number | null } | null; error: unknown }
+            try {
+              const { data: existing } = await supabase
+                .from('subscriptions')
+                .select('extra_tokens')
+                .eq('user_id', userId)
+                .single() as { data: { extra_tokens: number | null } | null; error: unknown }
 
-            const newExtra = (existing?.extra_tokens ?? 0) + tokensAdded
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (supabase.from('subscriptions') as any)
-              .update({ extra_tokens: newExtra })
-              .eq('user_id', userId)
+              const newExtra = (existing?.extra_tokens ?? 0) + tokensAdded
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              await (supabase.from('subscriptions') as any)
+                .update({ extra_tokens: newExtra })
+                .eq('user_id', userId)
 
-            console.log('[stripe webhook] Token pack purchased', {
-              userId,
-              size: session.metadata?.pack_size,
-              tokensAdded,
-              newExtra,
-            })
+              console.log('[stripe webhook] Token pack purchased', {
+                userId,
+                size: session.metadata?.pack_size,
+                tokensAdded,
+                newExtra,
+              })
+            } catch (err) {
+              console.error('[stripe webhook] Token pack update failed — apply migration 013 (extra_tokens column):', err)
+            }
           }
           break
         }
