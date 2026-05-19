@@ -19,10 +19,12 @@ export const STRIPE_PRICES = {
   token_large: process.env.STRIPE_PRICE_TOKEN_LARGE ?? '',
 } as const
 
+// Token paket fiyatları — ESTIMATED_TOKENS_PER_REPORT (25K) ile hizalı.
+// Her paket en az 1 tam rapor garantisi. Stripe price ID'leri (₺9/₺19/₺49) aynı.
 export const TOKEN_PACKS = {
-  small: { tokens: 10000, price: 9, label: '10K Token', priceId: STRIPE_PRICES.token_small },
-  medium: { tokens: 30000, price: 19, label: '30K Token', priceId: STRIPE_PRICES.token_medium },
-  large: { tokens: 100000, price: 49, label: '100K Token', priceId: STRIPE_PRICES.token_large },
+  small: { tokens: 25000, price: 9, label: '1 Rapor (25K Token)', priceId: STRIPE_PRICES.token_small },
+  medium: { tokens: 75000, price: 19, label: '3 Rapor (75K Token)', priceId: STRIPE_PRICES.token_medium },
+  large: { tokens: 250000, price: 49, label: '10 Rapor (250K Token)', priceId: STRIPE_PRICES.token_large },
 } as const
 
 export type TokenPackSize = keyof typeof TOKEN_PACKS
