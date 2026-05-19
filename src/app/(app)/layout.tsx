@@ -20,11 +20,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         className="border-b border-white/5"
         style={{ backgroundColor: 'var(--primary)' }}
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-between h-14 px-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-between h-20 px-6">
           <div className="flex items-center gap-6">
             <Link
               href="/dashboard"
-              className="group flex items-center gap-2 bg-white rounded-xl shadow-sm transition-all hover:shadow-md hover:scale-[1.02] px-3 py-1.5"
+              className="group flex items-center gap-2.5 bg-white rounded-xl shadow-sm transition-all hover:shadow-md hover:scale-[1.02] px-4 py-2"
               aria-label="Netport ana sayfa"
             >
               <Image
@@ -33,9 +33,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 width={400}
                 height={400}
                 priority
-                className="h-10 w-10 object-contain"
+                className="h-14 w-14 object-contain"
               />
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider bg-[var(--accent)] text-white shadow-sm">
+              <span className="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-mono font-bold uppercase tracking-wider bg-[var(--accent)] text-white shadow-sm">
                 AI
               </span>
             </Link>
