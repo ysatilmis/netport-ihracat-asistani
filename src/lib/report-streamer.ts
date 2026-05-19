@@ -1,6 +1,7 @@
 'use client'
 import { DEEP_DIVE_SECTIONS } from '@/lib/report-prompts'
 import type { CountryOption } from '@/lib/report-prompts'
+import { sanitizeError } from '@/lib/utils'
 
 export type FlowStep = 'form' | 'countries_streaming' | 'choosing' | 'deep_dive' | 'done'
 export type SectionData = { title: string; text: string; phase: number }
@@ -221,10 +222,10 @@ class ReportStreamer {
               this.setState({ countryOptions: event.countries, step: 'choosing' })
             } else if (event.type === 'countries_parse_error') {
               this.setState({
-                error: event.message ?? 'Ülke listesi ayıklanamadı.',
+                error: sanitizeError(event.message ?? 'Ülke listesi ayıklanamadı.'),
               })
             } else if (event.type === 'error' && event.message) {
-              this.setState({ error: event.message, errorCode: event.code })
+              this.setState({ error: sanitizeError(event.message), errorCode: event.code })
             }
           } catch {
             // skip malformed line
@@ -234,7 +235,7 @@ class ReportStreamer {
     } catch (err) {
       if ((err as Error).name === 'AbortError') return
       this.setState({
-        error: `Bağlantı hatası: ${(err as Error).message}`,
+        error: `Bağlantı hatası: ${sanitizeError((err as Error).message)}`,
         step: 'form',
       })
     } finally {
@@ -368,7 +369,7 @@ class ReportStreamer {
             } else if (event.type === 'done') {
               this.setState({ step: 'done' })
             } else if (event.type === 'error' && event.message) {
-              this.setState({ error: event.message, errorCode: event.code })
+              this.setState({ error: sanitizeError(event.message), errorCode: event.code })
             }
           } catch {
             // skip
@@ -377,7 +378,7 @@ class ReportStreamer {
       }
     } catch (err) {
       if ((err as Error).name === 'AbortError') return
-      this.setState({ error: `Bağlantı hatası: ${(err as Error).message}` })
+      this.setState({ error: `Bağlantı hatası: ${sanitizeError((err as Error).message)}` })
     } finally {
       if (this.currentController === controller) {
         this.currentController = null

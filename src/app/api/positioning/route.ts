@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { callLLMStream, type LLMModel } from '@/lib/llm'
 import { checkTokenLimit, recordTokenUsage } from '@/lib/token'
 import { positioningRequestSchema, zodErrorResponse } from '@/lib/validation/schemas'
+import { sanitizeError } from '@/lib/utils'
 import {
   POSITIONING_SECTIONS,
   detectTargetLanguage,
@@ -167,7 +168,7 @@ export async function POST(request: Request) {
               })
               break
             }
-            const msg = `\n\n[Bölüm hatası: ${rawMsg}]`
+            const msg = `\n\n[Bölüm hatası: ${sanitizeError(rawMsg)}]`
             sectionText += msg
             send({ type: 'chunk', section: section.key, text: msg })
           }
@@ -220,7 +221,7 @@ export async function POST(request: Request) {
           code: isProviderLimit ? 'PROVIDER_LIMIT' : undefined,
           message: isProviderLimit
             ? 'Servis şu an yoğun, lütfen birkaç dakika bekleyip tekrar deneyin.'
-            : rawMsg,
+            : sanitizeError(rawMsg),
         })
       } finally {
         controller.close()

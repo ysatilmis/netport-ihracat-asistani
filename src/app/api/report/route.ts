@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { callLLMStream, type LLMModel } from '@/lib/llm'
 import { checkTokenLimit, recordTokenUsage } from '@/lib/token'
 import { reportRequestSchema, zodErrorResponse } from '@/lib/validation/schemas'
+import { sanitizeError } from '@/lib/utils'
 import {
   DEEP_DIVE_SECTIONS,
   TARGET_COUNTRIES_SECTION,

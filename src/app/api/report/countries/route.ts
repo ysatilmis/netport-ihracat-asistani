@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { callLLMStream, type LLMModel } from '@/lib/llm'
 import { checkTokenLimit, recordTokenUsage } from '@/lib/token'
 import { countriesRequestSchema, zodErrorResponse } from '@/lib/validation/schemas'
+import { sanitizeError } from '@/lib/utils'
 import {
   TARGET_COUNTRIES_SECTION,
   extractCountries,
@@ -102,7 +103,7 @@ export async function POST(request: Request) {
         send({ type: 'done', totalTokens: tokens })
       } catch (err) {
         console.error('[report/countries] error:', err)
-        send({ type: 'error', message: (err as Error).message })
+        send({ type: 'error', message: sanitizeError((err as Error).message) })
       } finally {
         controller.close()
       }
