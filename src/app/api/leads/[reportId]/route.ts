@@ -1,6 +1,7 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { findLeads } from '@/lib/lead-finder'
 import { recordTokenUsage } from '@/lib/token'
+import { checkCronAuth } from '@/lib/auth/cron-guard'
 import { z } from 'zod'
 
 export const maxDuration = 60
@@ -36,9 +37,8 @@ export async function POST(request: Request, { params }: RouteContext) {
   const { reportId } = await params
   if (!reportIdSchema.safeParse(reportId).success) return badUuid()
 
-  const auth = request.headers.get('authorization') ?? ''
-  const secret = process.env.CRON_SECRET
-  const isService = secret && auth === `Bearer ${secret}`
+  const guard = checkCronAuth(request)
+  const isService = guard.kind === 'service'
 
   const supabase = isService ? await createServiceClient() : await createClient()
   let userId: string | null = null

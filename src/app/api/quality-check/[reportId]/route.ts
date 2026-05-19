@@ -1,6 +1,10 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { runQualityCheck } from '@/lib/quality-check'
 import { recordTokenUsage } from '@/lib/token'
+import { checkCronAuth } from '@/lib/auth/cron-guard'
+import { z } from 'zod'
+
+const reportIdSchema = z.string().uuid()
 
 // Hobby tier hard-clamp = 60s; chunk paralel ile total <40s hedefleniyor.
 export const maxDuration = 60
@@ -17,11 +21,13 @@ interface RouteContext {
 
 export async function POST(request: Request, { params }: RouteContext) {
   const { reportId } = await params
+  if (!reportIdSchema.safeParse(reportId).success) {
+    return Response.json({ ok: false, error: 'INVALID_UUID' }, { status: 400 })
+  }
 
-  // Auth: kullanıcı kendi raporunu denetleyebilir; veya service token bypass.
-  const auth = request.headers.get('authorization') ?? ''
-  const secret = process.env.CRON_SECRET
-  const isService = secret && auth === `Bearer ${secret}`
+  // Auth: kullanıcı kendi raporunu denetleyebilir; veya cron/service bypass.
+  const guard = checkCronAuth(request)
+  const isService = guard.kind === 'service'
 
   const supabase = isService ? await createServiceClient() : await createClient()
   let userId: string | null = null

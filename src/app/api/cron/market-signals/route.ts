@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { checkMarketSignal } from '@/lib/market-signal'
+import { requireCronOrService } from '@/lib/auth/cron-guard'
 
 export const maxDuration = 300
 
@@ -18,10 +19,9 @@ const BATCH_LIMIT = 20
 const STALE_DAYS = 5 // 5 gün geçtiyse yeniden kontrol et
 
 export async function POST(request: Request) {
-  // Vercel Cron Bearer auth — manuel tetikleme için de geçerli
-  const auth = request.headers.get('authorization') ?? ''
-  const secret = process.env.CRON_SECRET
-  if (secret && auth !== `Bearer ${secret}`) {
+  // Vercel Cron signature veya Bearer token — sadece service çağrıları.
+  const guard = requireCronOrService(request)
+  if (guard.kind === 'reject') {
     return new Response('Unauthorized', { status: 401 })
   }
 
