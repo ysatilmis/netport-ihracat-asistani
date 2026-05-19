@@ -66,7 +66,7 @@ export async function POST(request: Request) {
         })
 
         const prompt = section.buildPrompt(productClean, { previousSections: {} })
-        const result = await callLLMStream(section.model as LLMModel, prompt)
+        const result = await callLLMStream(section.model as LLMModel, prompt, section.maxTokens)
 
         for await (const textChunk of result.textStream) {
           sectionText += textChunk

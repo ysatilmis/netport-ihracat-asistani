@@ -50,6 +50,7 @@ Kurallar:
       model: openrouter('perplexity/sonar-pro'),
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.2,
+      maxOutputTokens: 2500,
     })
 
     const raw = result.text.trim()

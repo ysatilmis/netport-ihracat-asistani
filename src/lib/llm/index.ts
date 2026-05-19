@@ -21,6 +21,7 @@ const MODEL_MAP: Record<LLMModel, string> = {
 export interface LLMStreamResult {
   textStream: AsyncIterable<string>
   usage: Promise<{ totalTokens?: number } | undefined>
+  finishReason: Promise<string | undefined>
 }
 
 export function callLLMStream(model: LLMModel, prompt: string, maxTokens?: number): LLMStreamResult {
@@ -37,12 +38,12 @@ export function callLLMStream(model: LLMModel, prompt: string, maxTokens?: numbe
       model: openrouter(modelId),
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
-      ...(maxTokens ? { maxTokens } : {}),
+      ...(maxTokens ? { maxOutputTokens: maxTokens } : {}),
     })
 
     const textStream = (async function* () {
       const r = await resultPromise
-      console.log('[Perplexity finish]', modelId, r.text.length, 'chars', r.usage?.totalTokens ?? 0, 'tokens')
+      console.log('[Perplexity finish]', modelId, r.finishReason, r.text.length, 'chars', r.usage?.totalTokens ?? 0, 'tokens')
       const chunkSize = 80
       for (let i = 0; i < r.text.length; i += chunkSize) {
         yield r.text.slice(i, i + chunkSize)
@@ -52,6 +53,7 @@ export function callLLMStream(model: LLMModel, prompt: string, maxTokens?: numbe
     return {
       textStream,
       usage: resultPromise.then(r => r.usage),
+      finishReason: resultPromise.then(r => r.finishReason as string | undefined),
     }
   }
 
@@ -60,7 +62,7 @@ export function callLLMStream(model: LLMModel, prompt: string, maxTokens?: numbe
     model: openrouter(modelId),
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.3,
-    ...(maxTokens ? { maxTokens } : {}),
+    ...(maxTokens ? { maxOutputTokens: maxTokens } : {}),
     onError: ({ error }) => {
       console.error('[LLM stream error]', modelId, error)
     },
@@ -72,5 +74,6 @@ export function callLLMStream(model: LLMModel, prompt: string, maxTokens?: numbe
   return {
     textStream: result.textStream,
     usage: Promise.resolve(result.usage).then(u => u),
+    finishReason: Promise.resolve(result.finishReason).then(r => r as string | undefined),
   }
 }

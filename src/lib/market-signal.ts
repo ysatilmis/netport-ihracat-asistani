@@ -73,6 +73,7 @@ export async function checkMarketSignal(
         { role: 'user', content: PROMPT_BUILDER(product, country, previousSnapshot) },
       ],
       temperature: 0,
+      maxOutputTokens: 2000,
     })
 
     const raw = result.text.trim()

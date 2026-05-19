@@ -24,7 +24,7 @@ export async function extractCountriesWithClaude(
 
   try {
     const result = await generateText({
-      model: openrouter('anthropic/claude-sonnet-4-5'),
+      model: openrouter('anthropic/claude-sonnet-4-6'),
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: text },

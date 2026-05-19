@@ -14,6 +14,7 @@ export interface StreamerState {
   countriesText: string
   countryOptions: CountryOption[]
   sections: ReportState
+  sectionWarnings: Record<string, string>
   streamingSection?: string
   currentPhase?: number
   completedCount: number
@@ -33,6 +34,7 @@ function emptyState(): StreamerState {
     countriesText: '',
     countryOptions: [],
     sections: {},
+    sectionWarnings: {},
     streamingSection: undefined,
     currentPhase: undefined,
     completedCount: 0,
@@ -353,6 +355,13 @@ class ReportStreamer {
               this.setState({
                 streamingSection: undefined,
                 completedCount: this.state.completedCount + 1,
+              })
+            } else if (event.type === 'section_warning' && event.section && event.message) {
+              this.setState({
+                sectionWarnings: {
+                  ...this.state.sectionWarnings,
+                  [event.section]: event.message,
+                },
               })
             } else if (event.type === 'saved' && event.id) {
               this.setState({ savedReportId: event.id })

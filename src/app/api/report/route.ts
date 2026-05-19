@@ -17,15 +17,18 @@ function sseLine(event: Record<string, unknown>): string {
 }
 
 // Sonraki section'lara context olarak verilmek üzere bir section'ın özet kısmını çıkarır.
-// "## Yönetici Özeti" ile "## Detaylar" arasındaki bölüm. Bulunamazsa ilk 600 karakter.
+// "## Yönetici Özeti" ile "## Detaylar" arasındaki bölüm. Bulunamazsa ilk paragraflar.
+// Cap: 700 karakter (~200 token) — top prompt'ların 17-20K'ya şişmesini önler.
+const SUMMARY_MAX_CHARS = 700
 function extractSummary(text: string): string {
   if (!text) return ''
   const summaryMatch = text.match(/##\s*Yönetici Özeti\s*\n([\s\S]*?)(?=\n##\s|$)/i)
-  if (summaryMatch?.[1]) {
-    return summaryMatch[1].trim()
-  }
-  // Eski format / Perplexity çıktısı: özet başlığı yok → ilk paragraflar
-  return text.slice(0, 600).trim()
+  const body = summaryMatch?.[1]?.trim() ?? text.slice(0, SUMMARY_MAX_CHARS).trim()
+  if (body.length <= SUMMARY_MAX_CHARS) return body
+  // Hard cap: kelime sınırında kes
+  const truncated = body.slice(0, SUMMARY_MAX_CHARS)
+  const lastSpace = truncated.lastIndexOf(' ')
+  return (lastSpace > 500 ? truncated.slice(0, lastSpace) : truncated) + '…'
 }
 
 export async function POST(request: Request) {
@@ -131,6 +134,18 @@ export async function POST(request: Request) {
             const tokens = usage?.totalTokens ?? 0
             totalTokens += tokens
             void recordTokenUsage(user.id, section.phase, section.key, tokens, section.model)
+
+            // maxTokens'a takılan section → kullanıcıya bilgi notu (block etme, sadece warn).
+            const finishReason = await result.finishReason
+            if (finishReason === 'length') {
+              console.warn(`[report] section ${section.key} truncated (length)`)
+              send({
+                type: 'section_warning',
+                section: section.key,
+                code: 'LENGTH_CUT',
+                message: 'Bu bölüm uzunluk limitine takıldı, kısaltıldı.',
+              })
+            }
           } catch (sectionErr) {
             console.error(`[report] section ${section.key} failed:`, sectionErr)
             const rawMsg = (sectionErr as Error).message ?? String(sectionErr) ?? ''
