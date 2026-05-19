@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { signOut } from '@/actions/auth'
 import Link from 'next/link'
+import Image from 'next/image'
 import { TokenMeter } from '@/components/token-meter'
 import { AppNav } from '@/components/app-nav'
 import { getUnresolvedSignalCount } from '@/actions/signals'
@@ -21,15 +22,21 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between h-14 px-6">
           <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="flex items-center gap-2 group">
-              <div
-                className="w-7 h-7 rounded-md flex items-center justify-center shadow-sm transition-transform group-hover:scale-105"
-                style={{ backgroundColor: 'var(--accent)' }}
-              >
-                <span className="text-white text-sm font-bold">N</span>
-              </div>
-              <span className="font-bold text-white text-base tracking-tight">
-                Netport AI
+            <Link
+              href="/dashboard"
+              className="group flex items-center bg-white rounded-lg shadow-sm transition-all hover:shadow-md hover:scale-[1.02] px-2.5 py-1"
+              aria-label="Netport ana sayfa"
+            >
+              <Image
+                src="/netport-logo.png"
+                alt="Netport"
+                width={120}
+                height={32}
+                priority
+                className="h-7 w-auto"
+              />
+              <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-mono font-semibold uppercase tracking-wider bg-[var(--accent)] text-white">
+                AI
               </span>
             </Link>
             <AppNav signalCount={signalCount} />
