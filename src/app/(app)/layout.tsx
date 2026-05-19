@@ -24,18 +24,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="flex items-center gap-6">
             <Link
               href="/dashboard"
-              className="group flex items-center bg-white rounded-lg shadow-sm transition-all hover:shadow-md hover:scale-[1.02] px-2.5 py-1"
+              className="group flex items-center gap-2 bg-white rounded-xl shadow-sm transition-all hover:shadow-md hover:scale-[1.02] px-3 py-1.5"
               aria-label="Netport ana sayfa"
             >
               <Image
                 src="/netport-logo.png"
                 alt="Netport"
-                width={120}
-                height={32}
+                width={400}
+                height={400}
                 priority
-                className="h-7 w-auto"
+                className="h-10 w-10 object-contain"
               />
-              <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-mono font-semibold uppercase tracking-wider bg-[var(--accent)] text-white">
+              <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider bg-[var(--accent)] text-white shadow-sm">
                 AI
               </span>
             </Link>
