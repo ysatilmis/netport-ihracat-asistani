@@ -133,22 +133,23 @@ export async function POST(request: Request) {
             void recordTokenUsage(user.id, section.phase, section.key, tokens, section.model)
           } catch (sectionErr) {
             console.error(`[report] section ${section.key} failed:`, sectionErr)
-            const rawMsg = (sectionErr as Error).message ?? ''
+            const rawMsg = (sectionErr as Error).message ?? String(sectionErr) ?? ''
             const isProviderLimit =
               rawMsg.includes('Key limit exceeded') ||
+              rawMsg.includes('limit exceeded') ||
+              rawMsg.includes('monthly limit') ||
               rawMsg.includes('rate limit') ||
-              rawMsg.includes('Rate limit')
-            if (isProviderLimit) {
-              send({
-                type: 'error',
-                code: 'PROVIDER_LIMIT',
-                message: 'Servis şu an yoğun, lütfen birkaç dakika bekleyip tekrar deneyin.',
-              })
-              break
-            }
-            const errMsg = `\n\n[Bu bölüm yüklenirken hata oluştu: ${rawMsg}]`
-            sectionText += errMsg
-            send({ type: 'chunk', section: section.key, text: errMsg })
+              rawMsg.includes('Rate limit') ||
+              rawMsg.includes('openrouter.ai') ||
+              rawMsg.includes('Manage it using')
+            send({
+              type: 'error',
+              code: 'PROVIDER_LIMIT',
+              message: isProviderLimit
+                ? 'Servis şu an yoğun, lütfen birkaç dakika bekleyip tekrar deneyin.'
+                : 'Bir bölüm yüklenirken hata oluştu. Lütfen tekrar deneyin.',
+            })
+            break
           }
 
           // Sprint v4: sonraki section'lara sadece özet ver (token tasarrufu).
@@ -225,17 +226,21 @@ export async function POST(request: Request) {
         send({ type: 'done', totalTokens, selectedCountry: countryClean })
       } catch (err) {
         console.error('[report] stream error:', err)
-        const rawMsg = (err as Error).message ?? ''
+        const rawMsg = (err as Error).message ?? String(err) ?? ''
         const isProviderLimit =
           rawMsg.includes('Key limit exceeded') ||
+          rawMsg.includes('limit exceeded') ||
+          rawMsg.includes('monthly limit') ||
           rawMsg.includes('rate limit') ||
-          rawMsg.includes('Rate limit')
+          rawMsg.includes('Rate limit') ||
+          rawMsg.includes('openrouter.ai') ||
+          rawMsg.includes('Manage it using')
         send({
           type: 'error',
-          code: isProviderLimit ? 'PROVIDER_LIMIT' : undefined,
+          code: 'PROVIDER_LIMIT',
           message: isProviderLimit
             ? 'Servis şu an yoğun, lütfen birkaç dakika bekleyip tekrar deneyin.'
-            : rawMsg,
+            : 'Bir hata oluştu. Lütfen tekrar deneyin.',
         })
       } finally {
         controller.close()
