@@ -35,34 +35,40 @@ export function ReportSection({ id, title, text, phase, isStreaming }: ReportSec
   return (
     <section
       id={id}
-      className="scroll-mt-24 mb-10 border-l-[3px] pl-5 md:pl-6 py-1"
-      style={{ borderColor: meta.color }}
+      className="scroll-mt-24 mb-8 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
     >
-      <div className="mb-3 flex items-baseline justify-between gap-3 flex-wrap">
-        <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-slate-900">
-          {title}
-        </h2>
-        <Badge
-          variant="outline"
-          className="text-[10px] uppercase tracking-wider font-semibold shrink-0"
-          style={{ color: meta.color, borderColor: meta.color }}
-        >
-          {meta.badge}
-        </Badge>
-      </div>
-      <div className="text-slate-800">
-        <Markdown>{summary}</Markdown>
-        {details && (
-          <details className="mt-3">
-            <summary className="cursor-pointer text-sm font-medium text-slate-500 hover:text-slate-700 select-none">
-              Detayları gör ▼
-            </summary>
-            <div className="mt-3">
-              <Markdown>{details}</Markdown>
-            </div>
-          </details>
-        )}
-        {isStreaming && <span className="animate-pulse ml-0.5 text-slate-400">▌</span>}
+      <div
+        className="h-1.5 w-full"
+        style={{ backgroundColor: meta.color }}
+        aria-hidden
+      />
+      <div className="px-6 md:px-7 py-5 md:py-6">
+        <div className="mb-4 flex items-baseline justify-between gap-3 flex-wrap">
+          <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-slate-900">
+            {title}
+          </h2>
+          <Badge
+            className="text-[10px] uppercase tracking-wider font-semibold shrink-0 border-0 text-white shadow-sm"
+            style={{ backgroundColor: meta.color }}
+          >
+            {meta.badge}
+          </Badge>
+        </div>
+        <div className="text-slate-800">
+          <Markdown>{summary}</Markdown>
+          {details && (
+            <details className="mt-4 group">
+              <summary className="cursor-pointer text-sm font-medium text-slate-500 hover:text-[var(--primary)] select-none inline-flex items-center gap-1.5 transition-colors">
+                <span className="inline-block transition-transform group-open:rotate-90">▶</span>
+                Detayları gör
+              </summary>
+              <div className="mt-3 pt-3 border-t border-slate-100">
+                <Markdown>{details}</Markdown>
+              </div>
+            </details>
+          )}
+          {isStreaming && <span className="animate-pulse ml-0.5 text-slate-400">▌</span>}
+        </div>
       </div>
     </section>
   )

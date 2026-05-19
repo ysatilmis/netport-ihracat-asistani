@@ -38,12 +38,19 @@ export function CountryChooser({ countries, product, onPick, disabled }: Country
           return (
             <article
               key={c.name}
-              className={`group flex flex-col rounded-2xl border bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-md ${
+              className={`group relative flex flex-col rounded-2xl border bg-white p-5 transition-all hover:-translate-y-1 hover:shadow-lg overflow-hidden ${
                 isPrimary
-                  ? 'border-slate-300 ring-1 ring-slate-200'
-                  : 'border-slate-200'
+                  ? 'border-[var(--accent)]/30 ring-2 ring-[var(--accent)]/15 shadow-sm'
+                  : 'border-slate-200 shadow-sm'
               }`}
             >
+              {isPrimary && (
+                <div
+                  className="absolute top-0 left-0 right-0 h-1"
+                  style={{ background: 'linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%)' }}
+                  aria-hidden
+                />
+              )}
               {/* Rank + score */}
               <div className="flex items-center justify-between mb-3">
                 <span
