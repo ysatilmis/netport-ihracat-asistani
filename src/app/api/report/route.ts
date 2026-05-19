@@ -15,6 +15,18 @@ function sseLine(event: Record<string, unknown>): string {
   return `data: ${JSON.stringify(event)}\n\n`
 }
 
+// Sonraki section'lara context olarak verilmek üzere bir section'ın özet kısmını çıkarır.
+// "## Yönetici Özeti" ile "## Detaylar" arasındaki bölüm. Bulunamazsa ilk 600 karakter.
+function extractSummary(text: string): string {
+  if (!text) return ''
+  const summaryMatch = text.match(/##\s*Yönetici Özeti\s*\n([\s\S]*?)(?=\n##\s|$)/i)
+  if (summaryMatch?.[1]) {
+    return summaryMatch[1].trim()
+  }
+  // Eski format / Perplexity çıktısı: özet başlığı yok → ilk paragraflar
+  return text.slice(0, 600).trim()
+}
+
 interface ReportRequest {
   product: string
   country: string
@@ -66,9 +78,16 @@ export async function POST(request: Request) {
 
       // target_countries section'ını re-run etmek yerine kullanıcıdan gelen
       // önceki çıktıyı bağlam olarak yerleştir.
+      // Sprint v4: sadece özet kısmını context olarak ver (token tasarrufu).
       const previousSections: Record<string, PreviousSection> = {}
+      // Tam metni de tut — kayıt için lazım.
+      const fullSections: Record<string, PreviousSection> = {}
       if (countriesContextText) {
         previousSections[TARGET_COUNTRIES_SECTION.key] = {
+          title: TARGET_COUNTRIES_SECTION.title,
+          text: extractSummary(countriesContextText),
+        }
+        fullSections[TARGET_COUNTRIES_SECTION.key] = {
           title: TARGET_COUNTRIES_SECTION.title,
           text: countriesContextText,
         }
@@ -136,7 +155,12 @@ export async function POST(request: Request) {
             send({ type: 'chunk', section: section.key, text: errMsg })
           }
 
+          // Sprint v4: sonraki section'lara sadece özet ver (token tasarrufu).
           previousSections[section.key] = {
+            title: section.title,
+            text: extractSummary(sectionText),
+          }
+          fullSections[section.key] = {
             title: section.title,
             text: sectionText,
           }
@@ -162,7 +186,7 @@ export async function POST(request: Request) {
           }
 
           for (const section of DEEP_DIVE_SECTIONS) {
-            const prev = previousSections[section.key]
+            const prev = fullSections[section.key]
             if (prev) {
               allSections[section.key] = {
                 title: prev.title,

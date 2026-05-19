@@ -25,14 +25,44 @@ export async function POST(req: NextRequest) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
         const userId = session.metadata?.user_id
-        const tier = session.metadata?.tier ?? 'starter'
-        const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id
+        const metaType = session.metadata?.type
 
         if (!userId) {
           console.error('[stripe webhook] Missing user_id in session metadata', session.id)
           break
         }
 
+        // Token paketi tek seferlik alımı — extra_tokens artır.
+        if (metaType === 'token_pack') {
+          const tokensRaw = session.metadata?.tokens ?? '0'
+          const tokensAdded = parseInt(tokensRaw, 10) || 0
+
+          if (tokensAdded > 0) {
+            const { data: existing } = await supabase
+              .from('subscriptions')
+              .select('extra_tokens')
+              .eq('user_id', userId)
+              .single() as { data: { extra_tokens: number | null } | null; error: unknown }
+
+            const newExtra = (existing?.extra_tokens ?? 0) + tokensAdded
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase.from('subscriptions') as any)
+              .update({ extra_tokens: newExtra })
+              .eq('user_id', userId)
+
+            console.log('[stripe webhook] Token pack purchased', {
+              userId,
+              size: session.metadata?.pack_size,
+              tokensAdded,
+              newExtra,
+            })
+          }
+          break
+        }
+
+        // Subscription alımı (default).
+        const tier = session.metadata?.tier ?? 'starter'
+        const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id
         const tierLimits: Record<string, number> = { starter: 25000, pro: 100000, free: 5000 }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

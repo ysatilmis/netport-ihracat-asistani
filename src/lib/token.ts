@@ -19,7 +19,7 @@ export async function getMonthlyUsage(userId: string): Promise<{
   type SubRow = Pick<
     import('@/lib/supabase/types').Database['public']['Tables']['subscriptions']['Row'],
     'monthly_limit_tokens' | 'current_period_start' | 'current_period_end'
-  >
+  > & { extra_tokens?: number | null }
   type UsageRow = Pick<
     import('@/lib/supabase/types').Database['public']['Tables']['token_usage']['Row'],
     'tokens_used'
@@ -27,7 +27,7 @@ export async function getMonthlyUsage(userId: string): Promise<{
 
   const { data: sub } = await supabase
     .from('subscriptions')
-    .select('monthly_limit_tokens, current_period_start, current_period_end')
+    .select('monthly_limit_tokens, current_period_start, current_period_end, extra_tokens')
     .eq('user_id', userId)
     .single() as { data: SubRow | null; error: unknown }
 
@@ -41,10 +41,11 @@ export async function getMonthlyUsage(userId: string): Promise<{
     .lte('created_at', sub.current_period_end) as { data: UsageRow[] | null; error: unknown }
 
   const used = usage?.reduce((sum, row) => sum + row.tokens_used, 0) ?? 0
+  const extra = sub.extra_tokens ?? 0
 
   return {
     used,
-    limit: sub.monthly_limit_tokens,
+    limit: sub.monthly_limit_tokens + extra,
     periodStart: sub.current_period_start,
     periodEnd: sub.current_period_end,
   }

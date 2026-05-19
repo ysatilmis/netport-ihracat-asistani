@@ -14,7 +14,18 @@ export const stripe = stripeKey
 export const STRIPE_PRICES = {
   starter: process.env.STRIPE_PRICE_STARTER ?? '',
   pro: process.env.STRIPE_PRICE_PRO ?? '',
+  token_small: process.env.STRIPE_PRICE_TOKEN_SMALL ?? '',
+  token_medium: process.env.STRIPE_PRICE_TOKEN_MEDIUM ?? '',
+  token_large: process.env.STRIPE_PRICE_TOKEN_LARGE ?? '',
 } as const
+
+export const TOKEN_PACKS = {
+  small: { tokens: 10000, price: 9, label: '10K Token', priceId: STRIPE_PRICES.token_small },
+  medium: { tokens: 30000, price: 19, label: '30K Token', priceId: STRIPE_PRICES.token_medium },
+  large: { tokens: 100000, price: 49, label: '100K Token', priceId: STRIPE_PRICES.token_large },
+} as const
+
+export type TokenPackSize = keyof typeof TOKEN_PACKS
 
 export const PLANS = {
   free: {
