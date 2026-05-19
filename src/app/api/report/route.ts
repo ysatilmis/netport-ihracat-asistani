@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { callLLMStream, type LLMModel } from '@/lib/llm'
 import { checkTokenLimit, recordTokenUsage } from '@/lib/token'
+import { reportRequestSchema, zodErrorResponse } from '@/lib/validation/schemas'
 import {
   DEEP_DIVE_SECTIONS,
   TARGET_COUNTRIES_SECTION,
@@ -27,15 +28,6 @@ function extractSummary(text: string): string {
   return text.slice(0, 600).trim()
 }
 
-interface ReportRequest {
-  product: string
-  country: string
-  // Faz 1 §1 çıktısı — kullanıcı bu metni çıktı olarak gördükten sonra ülkeyi
-  // seçti. Sonraki section'lara bağlam olarak inject ediyoruz, böylece
-  // target_countries section'ı tekrar koşmaz.
-  countriesContext?: string
-}
-
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -56,14 +48,18 @@ export async function POST(request: Request) {
     throw e
   }
 
-  const body = (await request.json()) as ReportRequest
-
-  if (!body.product?.trim() || !body.country?.trim()) {
-    return new Response(JSON.stringify({ error: 'product and country are required' }), {
+  let rawBody: unknown
+  try {
+    rawBody = await request.json()
+  } catch {
+    return new Response(JSON.stringify({ error: 'INVALID_JSON' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     })
   }
+  const parsed = reportRequestSchema.safeParse(rawBody)
+  if (!parsed.success) return zodErrorResponse(parsed.error)
+  const body = parsed.data
 
   const productClean = body.product.trim()
   const countryClean = body.country.trim()

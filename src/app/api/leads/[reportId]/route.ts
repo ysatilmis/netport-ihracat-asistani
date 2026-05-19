@@ -1,6 +1,7 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { findLeads } from '@/lib/lead-finder'
 import { recordTokenUsage } from '@/lib/token'
+import { z } from 'zod'
 
 export const maxDuration = 60
 
@@ -8,8 +9,15 @@ interface RouteContext {
   params: Promise<{ reportId: string }>
 }
 
+const reportIdSchema = z.string().uuid()
+
+function badUuid() {
+  return Response.json({ ok: false, error: 'INVALID_UUID' }, { status: 400 })
+}
+
 export async function GET(request: Request, { params }: RouteContext) {
   const { reportId } = await params
+  if (!reportIdSchema.safeParse(reportId).success) return badUuid()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return new Response('Unauthorized', { status: 401 })
@@ -26,6 +34,7 @@ export async function GET(request: Request, { params }: RouteContext) {
 
 export async function POST(request: Request, { params }: RouteContext) {
   const { reportId } = await params
+  if (!reportIdSchema.safeParse(reportId).success) return badUuid()
 
   const auth = request.headers.get('authorization') ?? ''
   const secret = process.env.CRON_SECRET

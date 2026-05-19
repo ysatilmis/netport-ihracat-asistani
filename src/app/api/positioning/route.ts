@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { callLLMStream, type LLMModel } from '@/lib/llm'
 import { checkTokenLimit, recordTokenUsage } from '@/lib/token'
+import { positioningRequestSchema, zodErrorResponse } from '@/lib/validation/schemas'
 import {
   POSITIONING_SECTIONS,
   detectTargetLanguage,
@@ -12,10 +13,6 @@ export const maxDuration = 300
 
 function sseLine(event: Record<string, unknown>): string {
   return `data: ${JSON.stringify(event)}\n\n`
-}
-
-interface PositioningRequest {
-  reportId: string
 }
 
 export async function POST(request: Request) {
@@ -38,13 +35,18 @@ export async function POST(request: Request) {
     throw e
   }
 
-  const body = (await request.json()) as PositioningRequest
-  if (!body.reportId?.trim()) {
-    return new Response(JSON.stringify({ error: 'reportId required' }), {
+  let rawBody: unknown
+  try {
+    rawBody = await request.json()
+  } catch {
+    return new Response(JSON.stringify({ error: 'INVALID_JSON' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     })
   }
+  const parsed = positioningRequestSchema.safeParse(rawBody)
+  if (!parsed.success) return zodErrorResponse(parsed.error)
+  const body = parsed.data
 
   // İlgili raporu çek
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

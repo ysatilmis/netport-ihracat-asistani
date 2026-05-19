@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { callLLMStream, type LLMModel } from '@/lib/llm'
 import { checkTokenLimit, recordTokenUsage } from '@/lib/token'
+import { countriesRequestSchema, zodErrorResponse } from '@/lib/validation/schemas'
 import {
   TARGET_COUNTRIES_SECTION,
   extractCountries,
@@ -33,16 +34,19 @@ export async function POST(request: Request) {
     throw e
   }
 
-  const { product } = (await request.json()) as { product: string }
-
-  if (!product?.trim()) {
-    return new Response(JSON.stringify({ error: 'product is required' }), {
+  let rawBody: unknown
+  try {
+    rawBody = await request.json()
+  } catch {
+    return new Response(JSON.stringify({ error: 'INVALID_JSON' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     })
   }
+  const parsed = countriesRequestSchema.safeParse(rawBody)
+  if (!parsed.success) return zodErrorResponse(parsed.error)
 
-  const productClean = product.trim()
+  const productClean = parsed.data.product.trim()
   const section = TARGET_COUNTRIES_SECTION
 
   const stream = new ReadableStream({
