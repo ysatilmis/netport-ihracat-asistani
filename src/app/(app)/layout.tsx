@@ -17,7 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
       <header className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto flex items-center justify-between h-20 px-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-between h-28 px-6">
           <div className="flex items-center gap-6">
             <Link
               href="/dashboard"
@@ -30,7 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 width={400}
                 height={400}
                 priority
-                className="h-16 w-auto object-contain"
+                className="h-24 w-auto object-contain"
               />
             </Link>
             <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-mono font-bold uppercase tracking-wider bg-[var(--accent)] text-white shadow-sm">

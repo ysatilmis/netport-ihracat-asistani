@@ -12,7 +12,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               width={400}
               height={400}
               priority
-              className="h-28 w-auto object-contain"
+              className="h-40 w-auto object-contain"
             />
           </div>
           <div className="inline-flex items-center gap-2 mb-1">
