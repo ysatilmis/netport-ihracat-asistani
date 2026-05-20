@@ -45,12 +45,12 @@ export default async function PricingPage() {
           <span>Fiyatlandırma</span>
         </div>
         <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-3 leading-[1.08]">
-          Aylık <span className="bg-gradient-to-r from-[var(--accent)] to-red-600 bg-clip-text text-transparent">3 rapor ücretsiz</span>.
+          Aylık <span className="bg-gradient-to-r from-[var(--accent)] to-red-600 bg-clip-text text-transparent">2 rapor ücretsiz</span>.
           <br className="hidden md:block" />
           Daha fazlası mı? Pack alırsın.
         </h1>
         <p className="text-base text-slate-600 max-w-xl mx-auto leading-relaxed">
-          Karmaşık plan yok. Her ay 3 tam ihracat raporu hakkın var. Bittiyse 3'lük paket satın al.
+          Karmaşık plan yok. Her ay 2 tam ihracat raporu hakkın var. Bittiyse 3'lük paket satın al.
           Mevcut periyodun sonuna kadar kullanılır.
         </p>
       </div>
@@ -165,7 +165,7 @@ export default async function PricingPage() {
 
             <p className="text-center text-xs text-slate-400 mt-4">
               {!user
-                ? 'Kayıt ücretsiz, 3 rapor hakkın hemen aktif'
+                ? 'Kayıt ücretsiz, 2 rapor hakkın hemen aktif'
                 : iyzicoConfigured
                   ? 'Kartla güvenli ödeme — 3D Secure korumalı'
                   : 'Ödeme şu an manuel — Iyzico kart ödemesi yakında entegre olacak'}
