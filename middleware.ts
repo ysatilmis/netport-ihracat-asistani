@@ -1,7 +1,24 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const STATIC_EXT = /\.(png|svg|jpg|jpeg|gif|webp|ico|woff2?|ttf|css|js|map)$/i
+
+function isPublicAsset(path: string) {
+  return (
+    path.startsWith('/_next/') ||
+    path.startsWith('/api/') ||
+    path === '/favicon.ico' ||
+    STATIC_EXT.test(path)
+  )
+}
+
 export async function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname
+
+  if (isPublicAsset(path)) {
+    return NextResponse.next()
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -22,7 +39,6 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-  const path = request.nextUrl.pathname
 
   if (!user && !path.startsWith('/login') && !path.startsWith('/register')) {
     return NextResponse.redirect(new URL('/login', request.url))
@@ -41,7 +57,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon\\.ico|api/|\\.svg$|\\.png$|\\.jpg$|\\.jpeg$|\\.gif$|\\.webp$|\\.ico$).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/).*)'],
 }
