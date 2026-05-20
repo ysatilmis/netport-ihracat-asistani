@@ -141,7 +141,7 @@ COUNTRIES_JSON: {"countries":[{"name":"<ülke adı>","score":<1-10 puan>,"custom
 
 ## Kalite Kuralları
 - Her sayısal veriye \`[Kaynak: ad, yıl]\` ekle.
-- Spekülasyon yasak — kesin veri yoksa **tahmini değer + metodoloji açıklaması** ver ve "⚠️ Tahmini değer — resmi kaynak doğrulaması önerilir" notunu ekle. "Veri bulunamadı" yazmak kesinlikle yasak.
+- Spekülasyon yasak — kesin veri yoksa **tahmini değer + metodoloji açıklaması** ver ve "⚠️ Tahmini değer — resmi kaynak doğrulaması önerilir" notunu ekle. **Yasak ifadeler (raporu zayıf gösterir):** "veri bulunamadı", "veri yok", "bilgi yok", "mevcut değil", "bulunmamaktadır", "elde edilemedi", "verisi yoktur", "bilinmiyor". Bu ifadeler **kesinlikle yasak** — yerine şu pattern'leri kullan: (a) "Yaklaşık ~X seviyesinde (proxy: <ilgili-segment>, [kaynak yıl])" — proxy ile tahmin, (b) "X için doğrudan rakam yayınlanmıyor; <yakın-segment> referans alınarak ~Y olarak tahmin edilir" — yakın segment ile tahmin, (c) eğer hiçbir proxy/tahmin yapılamıyorsa **o satırı/maddeyi tamamen atla** — boş yazma. **Asla "==veri bulunamadı==" gibi vurgulu işaretleme kullanma.**
 - Genel ifade ("büyük pazar", "iyi fırsat") yasak; her iddia somut sayıyla.
 `.trim(),
   },
@@ -208,7 +208,7 @@ Zorunlu alanlar:
 ## Kalite Kuralları
 - Her rakam için \`[Kaynak: Statista 2024 / Eurostat / vb.]\` belirt.
 - Önceki bölümdeki gümrük avantajı + Türkiye payı verisini yorumla.
-- Kesin veri yoksa **en yakın proxy değerini kullan** (sektör büyüme ortalaması, benzer pazar verisi vb.) ve "⚠️ Tahmini değer — [metodoloji] ile hesaplandı, resmi kaynak doğrulaması önerilir" notunu ekle. "Veri bulunamadı" yazmak kesinlikle yasak.
+- Kesin veri yoksa **en yakın proxy değerini kullan** (sektör büyüme ortalaması, benzer pazar verisi vb.) ve "⚠️ Tahmini değer — [metodoloji] ile hesaplandı, resmi kaynak doğrulaması önerilir" notunu ekle. **Yasak ifadeler (raporu zayıf gösterir):** "veri bulunamadı", "veri yok", "bilgi yok", "mevcut değil", "bulunmamaktadır", "elde edilemedi", "verisi yoktur", "bilinmiyor". Bu ifadeler **kesinlikle yasak** — yerine şu pattern'leri kullan: (a) "Yaklaşık ~X seviyesinde (proxy: <ilgili-segment>, [kaynak yıl])" — proxy ile tahmin, (b) "X için doğrudan rakam yayınlanmıyor; <yakın-segment> referans alınarak ~Y olarak tahmin edilir" — yakın segment ile tahmin, (c) eğer hiçbir proxy/tahmin yapılamıyorsa **o satırı/maddeyi tamamen atla** — boş yazma. **Asla "==veri bulunamadı==" gibi vurgulu işaretleme kullanma.**
 `.trim()
     },
   },

@@ -19,6 +19,50 @@ function unwrapTablesInCodeFences(input: string): string {
 }
 
 /**
+ * LLM bazen "veri bulunamadı / bilgi yok / mevcut değil" gibi ifadeleri **bold**
+ * veya ==mark== ile vurgulayarak rapor algısını zayıflatır. Prompt'larda yasak
+ * olmasına rağmen sızdığında bunları soft gri italik "~ tahmini veri yok"
+ * pattern'ine çeviriyoruz. Tek başına bullet'lardaki vakaları (anlamlı bilgi
+ * kalmadan) tamamen siliyoruz.
+ */
+const FORBIDDEN_DATA_GAP_PHRASES = [
+  'veri bulunamadı',
+  'veri bulunmadı',
+  'veri yok',
+  'verisi yok',
+  'verisi yoktur',
+  'veri mevcut değil',
+  'veri bulunamamaktadır',
+  'bilgi yok',
+  'bilgi bulunamadı',
+  'mevcut değil',
+  'bulunmamaktadır',
+  'elde edilemedi',
+  'bilinmiyor',
+]
+function softenDataGaps(input: string): string {
+  const escaped = FORBIDDEN_DATA_GAP_PHRASES.map((p) =>
+    p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+  ).join('|')
+  // 1. **veri bulunamadı** / ==veri bulunamadı== → italic mute
+  const wrappedRe = new RegExp(
+    `\\*\\*\\s*(?:${escaped})\\s*\\*\\*|==\\s*(?:${escaped})\\s*==`,
+    'gi',
+  )
+  let out = input.replace(wrappedRe, '*~ tahmini veri yok*')
+  // 2. plain text occurence (bold/mark wrap olmadan) → italic mute
+  const plainRe = new RegExp(`(?<![\\*\\w])(?:${escaped})(?!\\*)`, 'gi')
+  out = out.replace(plainRe, '*~ tahmini veri yok*')
+  // 3. Bullet satırı tamamen "X: ~ tahmini veri yok" → satırı sil
+  //    (örn: "- Türkiye payı: ~ tahmini veri yok.")
+  out = out.replace(
+    /^[ \t]*[-*•]\s+[^:\n]{1,60}:\s*\*~ tahmini veri yok\*\s*[.,;:!?]*\s*\n?/gm,
+    '',
+  )
+  return out
+}
+
+/**
  * [Kaynak: ...] paternlerini italikleştirir. İçinde URL varsa tıklanabilir
  * markdown link'e çevirir; URL yoksa sadece italik text.
  *
@@ -52,7 +96,7 @@ function styleKaynakCitations(input: string): string {
 }
 
 export function Markdown({ children }: MarkdownProps) {
-  const cleaned = styleKaynakCitations(unwrapTablesInCodeFences(children))
+  const cleaned = softenDataGaps(styleKaynakCitations(unwrapTablesInCodeFences(children)))
   return (
     <div
       className="prose prose-slate max-w-none
