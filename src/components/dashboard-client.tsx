@@ -113,7 +113,10 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
 
       {/* Form */}
       {step === 'form' && (
-        <div className="max-w-xl mb-8 p-6 rounded-2xl bg-white border" style={{ borderColor: 'var(--border)' }}>
+        <div
+          className="max-w-2xl mx-auto mb-8 p-8 rounded-2xl bg-white border shadow-xl shadow-slate-200/40"
+          style={{ borderColor: 'var(--border)', borderTopWidth: '2px', borderTopColor: 'var(--accent)' }}
+        >
           <ProductForm
             defaultProduct={defaultProduct}
             onSubmit={handleProductSubmit}

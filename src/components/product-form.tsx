@@ -22,10 +22,10 @@ export function ProductForm({ defaultProduct = '', onSubmit, isLoading }: Produc
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div
-        className="rounded-xl border p-4"
+        className="rounded-xl p-4"
         style={{
-          backgroundColor: 'var(--accent-soft, #f1f5fb)',
-          borderColor: 'var(--border)',
+          backgroundColor: '#FFF7ED',
+          borderLeft: '3px solid var(--accent)',
         }}
       >
         <p className="text-base font-semibold leading-snug" style={{ color: 'var(--foreground)' }}>
@@ -47,7 +47,7 @@ export function ProductForm({ defaultProduct = '', onSubmit, isLoading }: Produc
           placeholder="örn: el yapımı seramik, organik zeytinyağı, deri çanta"
           required
           disabled={isLoading}
-          className="text-base rounded-xl shadow-sm"
+          className="text-lg rounded-xl shadow-sm focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all"
           style={{ borderColor: 'var(--border)' }}
         />
         <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
@@ -57,7 +57,7 @@ export function ProductForm({ defaultProduct = '', onSubmit, isLoading }: Produc
       <Button
         type="submit"
         disabled={isLoading || !product.trim()}
-        className="w-full text-white font-semibold py-3 text-base rounded-xl shadow-sm hover:opacity-90 transition-opacity"
+        className="w-full text-white font-semibold py-3.5 text-base rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200"
         style={{ backgroundColor: isLoading ? 'var(--muted-foreground)' : 'var(--primary)' }}
       >
         {isLoading ? 'Rapor oluşturuluyor...' : '🚀 Tam İhracat Raporu Oluştur'}
