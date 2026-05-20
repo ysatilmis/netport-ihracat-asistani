@@ -33,7 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 className="h-28 w-auto object-contain"
               />
             </Link>
-            <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-mono font-bold uppercase tracking-wider bg-[var(--accent)] text-white shadow-sm">
+            <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-mono font-bold uppercase tracking-wider bg-[var(--accent-strong)] text-white shadow-sm">
               AI
             </span>
             <AppNav signalCount={signalCount} />

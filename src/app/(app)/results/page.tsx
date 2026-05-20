@@ -61,7 +61,7 @@ export default async function ResultsPage() {
         <Link
           href="/dashboard"
           className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-lg text-white shadow-sm transition-all hover:-translate-y-px hover:shadow-md"
-          style={{ backgroundColor: 'var(--accent)' }}
+          style={{ backgroundColor: 'var(--accent-strong)' }}
         >
           + Yeni rapor
         </Link>

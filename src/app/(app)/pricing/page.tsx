@@ -111,7 +111,7 @@ export default async function PricingPage() {
           <div className="p-8 md:p-10">
             <div className="flex items-baseline justify-between flex-wrap gap-3 mb-2">
               <h3 className="text-2xl font-bold text-slate-900 tracking-tight">{REPORT_PACK.label}</h3>
-              <span className="text-[11px] font-mono font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[var(--accent)]/10 text-[var(--accent-strong)] border border-[var(--accent)]/30">
                 Tek Seferlik
               </span>
             </div>

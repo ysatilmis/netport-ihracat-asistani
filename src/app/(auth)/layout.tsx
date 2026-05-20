@@ -25,7 +25,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               priority
               className="h-14 w-auto object-contain"
             />
-            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-mono font-bold uppercase tracking-wider bg-[var(--accent)] text-white shadow-sm">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-mono font-bold uppercase tracking-wider bg-[var(--accent-strong)] text-white shadow-sm">
               AI
             </span>
           </div>
@@ -84,7 +84,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             priority
             className="h-10 w-auto object-contain"
           />
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-[var(--accent)] text-white">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-[var(--accent-strong)] text-white">
             AI
           </span>
         </div>
