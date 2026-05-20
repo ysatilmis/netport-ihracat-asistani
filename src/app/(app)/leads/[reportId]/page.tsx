@@ -29,37 +29,48 @@ export default async function LeadsPage({ params }: { params: Promise<{ reportId
   const initial = await getLeads(reportId)
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-5xl">
       {/* Breadcrumb */}
-      <nav className="mb-4 flex items-center gap-2 text-sm text-slate-500" aria-label="Breadcrumb">
-        <Link href="/results" className="hover:text-slate-900 transition-colors">
+      <nav
+        className="mb-6 flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-400"
+        aria-label="Breadcrumb"
+      >
+        <Link href="/results" className="hover:text-slate-700 transition-colors">
           Raporlarım
         </Link>
-        <span>›</span>
-        <Link href={`/results/${reportId}`} className="hover:text-slate-900 transition-colors">
-          {product}{country ? ` — ${country}` : ''}
+        <span aria-hidden>/</span>
+        <Link
+          href={`/results/${reportId}`}
+          className="hover:text-slate-700 transition-colors truncate max-w-[16rem]"
+        >
+          {product}{country ? ` → ${country}` : ''}
         </Link>
-        <span>›</span>
-        <span className="text-slate-900 font-medium">Alıcı Listesi</span>
+        <span aria-hidden>/</span>
+        <span className="text-slate-900 font-semibold">Alıcı Listesi</span>
       </nav>
 
       {/* Header */}
-      <header className="mb-8 border-b border-slate-200 pb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-2">
-          🎯 Alıcı Listesi
+      <header className="mb-8">
+        <div className="text-xs font-mono uppercase tracking-wider text-[var(--accent)] mb-2">
+          Faz 3 · Alıcı Eşleştirme
+        </div>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mb-3">
+          Alıcı Listesi
         </h1>
-        <div className="flex items-center gap-3 text-sm text-slate-600">
-          <span>
-            <strong className="text-slate-900">{product}</strong>
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-700 font-medium">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--accent)]" aria-hidden />
+            {product}
             {country && (
               <>
-                {' → '}
-                <strong className="text-slate-900">{country}</strong>
+                <span className="text-slate-400 mx-0.5">→</span>
+                {country}
               </>
             )}
           </span>
-          <span className="text-slate-300">·</span>
-          <span>Perplexity sonar-pro</span>
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs font-mono text-slate-500">
+            Perplexity sonar-pro
+          </span>
         </div>
       </header>
 

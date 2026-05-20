@@ -20,9 +20,11 @@ const SCALE_COLOR: Record<string, string> = {
 function LeadCard({ lead }: { lead: Lead }) {
   const scaleCls = SCALE_COLOR[lead.scale] ?? 'bg-slate-100 text-slate-900 border-slate-200'
   return (
-    <li className="rounded-xl bg-white border border-slate-200 p-4 flex flex-col gap-2">
+    <li className="group rounded-xl bg-white border border-slate-200 p-4 flex flex-col gap-2 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
       <div className="flex items-start gap-2 justify-between">
-        <h3 className="text-sm font-semibold text-slate-900 leading-snug">{lead.name}</h3>
+        <h3 className="text-sm font-semibold text-slate-900 leading-snug group-hover:text-[var(--primary)] transition-colors">
+          {lead.name}
+        </h3>
         {lead.scale && (
           <span
             className={`shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border ${scaleCls}`}
@@ -39,7 +41,7 @@ function LeadCard({ lead }: { lead: Lead }) {
           href={lead.website}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-blue-600 hover:underline truncate"
+          className="text-xs text-[var(--primary)] hover:text-[var(--accent)] hover:underline truncate font-medium"
         >
           {lead.website}
         </a>

@@ -54,21 +54,27 @@ export default async function PositioningPage({ params }: PageProps) {
     .maybeSingle()
 
   return (
-    <div className="max-w-4xl">
-      <nav aria-label="Breadcrumb" className="mb-6 text-xs text-slate-500">
-        <Link href="/dashboard" className="hover:text-slate-900">
+    <div className="max-w-5xl">
+      <nav
+        aria-label="Breadcrumb"
+        className="mb-6 flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-400"
+      >
+        <Link href="/dashboard" className="hover:text-slate-700 transition-colors">
           Dashboard
         </Link>
-        <span className="mx-2 text-slate-300">/</span>
-        <Link href="/results" className="hover:text-slate-900">
+        <span aria-hidden>/</span>
+        <Link href="/results" className="hover:text-slate-700 transition-colors">
           Raporlarım
         </Link>
-        <span className="mx-2 text-slate-300">/</span>
-        <Link href={`/results/${reportId}`} className="hover:text-slate-900">
+        <span aria-hidden>/</span>
+        <Link
+          href={`/results/${reportId}`}
+          className="hover:text-slate-700 transition-colors truncate max-w-[16rem]"
+        >
           {product} → {country}
         </Link>
-        <span className="mx-2 text-slate-300">/</span>
-        <span className="text-slate-900 font-medium">Faz B</span>
+        <span aria-hidden>/</span>
+        <span className="text-slate-900 font-semibold">Faz B</span>
       </nav>
 
       <PositioningClient
