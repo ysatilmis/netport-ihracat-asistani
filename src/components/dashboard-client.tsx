@@ -54,9 +54,9 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
   const reset = () => streamer.reset()
 
   return (
-    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto">
+    <div className="flex flex-col items-center">
       {/* V3 Hero gradient banner */}
-      <div className="hero-gradient -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-6 md:py-8 mb-4 border-b border-slate-200/60">
+      <div className="w-full hero-gradient -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-6 md:py-8 mb-4 border-b border-slate-200/60">
         <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-3 md:mb-4 leading-[1.08]">
           İhracat Pazar Analizi
         </h1>
