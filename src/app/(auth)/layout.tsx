@@ -22,6 +22,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               alt="Netport"
               width={400}
               height={400}
+              unoptimized
               priority
               className="h-14 w-auto object-contain"
             />
@@ -81,6 +82,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             alt="Netport"
             width={400}
             height={400}
+            unoptimized
             priority
             className="h-10 w-auto object-contain"
           />
