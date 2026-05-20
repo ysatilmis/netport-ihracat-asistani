@@ -125,7 +125,7 @@ export function PositioningClient({ reportId, product, country, initialPackage }
       <header className="mb-8">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">
+            <p className="text-xs font-mono uppercase tracking-wider text-[var(--accent-strong)] font-bold mb-2">
               Faz B · Konumlandırma & İletişim
             </p>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
@@ -157,8 +157,8 @@ export function PositioningClient({ reportId, product, country, initialPackage }
         </div>
 
         {isRunning && (
-          <div className="mt-4 p-3 rounded-xl bg-blue-50 border border-blue-200 text-sm text-blue-900 flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+          <div className="mt-4 p-3 rounded-xl bg-[var(--p1-bg)] border border-[var(--p1-line)] text-sm text-[var(--p1-fg)] flex items-center gap-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-[var(--phase-1)] animate-pulse" />
             <span>
               Konumlandırma paketi üretiliyor · {completedCount}/{POSITIONING_SECTIONS.length} bölüm tamamlandı
             </span>
@@ -172,7 +172,7 @@ export function PositioningClient({ reportId, product, country, initialPackage }
         )}
 
         {isDone && packageId && (
-          <div className="mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-900">
+          <div className="mt-4 p-3 rounded-xl bg-[var(--p2-bg)] border border-[var(--p2-line)] text-sm text-[var(--p2-fg)] font-medium">
             ✅ Konumlandırma paketi hazır. Kopyala / yazdır / kullan.
           </div>
         )}
@@ -211,7 +211,7 @@ export function PositioningClient({ reportId, product, country, initialPackage }
                 </span>
                 <h2 className="text-lg font-semibold text-slate-900">{s.title}</h2>
                 {isStreaming && (
-                  <span className="text-xs text-blue-600 animate-pulse ml-auto">akıyor…</span>
+                  <span className="text-xs font-mono text-[var(--p1-fg)] animate-pulse ml-auto">akıyor…</span>
                 )}
               </header>
               <Markdown>{text}</Markdown>

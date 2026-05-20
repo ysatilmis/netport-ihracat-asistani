@@ -162,11 +162,8 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
       {/* Aşama 2 (deep dive) progress */}
       {(step === 'deep_dive' || step === 'done') && (
         <>
-          <div
-            className="my-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm"
-            style={{ backgroundColor: '#eef6ff', color: '#1e40af' }}
-          >
-            <span>🎯</span>
+          <div className="my-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm bg-[var(--p1-bg)] text-[var(--p1-fg)] border border-[var(--p1-line)]">
+            <span aria-hidden>🎯</span>
             <span>
               Seçilen pazar: <strong>{selectedCountry}</strong> — 10 bölüm bu ülkeye özel.
             </span>
@@ -194,11 +191,11 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
       {step === 'done' && (
         <div className="mt-6 flex flex-col gap-3">
           {savedReportId && (
-            <div className="p-4 rounded-xl bg-green-50 border border-green-200 text-sm flex items-center justify-between gap-3 flex-wrap">
-              <span className="text-green-800">✅ Rapor otomatik kaydedildi.</span>
+            <div className="p-4 rounded-xl bg-[var(--p2-bg)] border border-[var(--p2-line)] text-sm flex items-center justify-between gap-3 flex-wrap">
+              <span className="text-[var(--p2-fg)] font-medium">✅ Rapor otomatik kaydedildi.</span>
               <a
                 href={`/results/${savedReportId}`}
-                className="font-medium text-green-700 hover:text-green-900 underline"
+                className="font-medium text-[var(--p2-fg)] hover:underline"
               >
                 📄 Raporlarım&apos;da görüntüle →
               </a>

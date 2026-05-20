@@ -105,8 +105,8 @@ export function LeadsPanel({ reportId, initial, product, country }: Props) {
 
   if (isPending && !row) {
     return (
-      <aside className="mb-6 p-4 rounded-xl border border-blue-200 bg-blue-50 text-sm text-blue-900 flex items-center gap-2">
-        <span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+      <aside className="mb-6 p-4 rounded-xl border border-[var(--p1-line)] bg-[var(--p1-bg)] text-sm text-[var(--p1-fg)] flex items-center gap-2">
+        <span className="inline-block w-2 h-2 rounded-full bg-[var(--phase-1)] animate-pulse" />
         Alıcı listesi hazırlanıyor — ~15-30 saniye.
       </aside>
     )
