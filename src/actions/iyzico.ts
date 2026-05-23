@@ -33,7 +33,7 @@ export async function createReportPackCheckout(): Promise<
   }
 
   const conversationId = randomUUID()
-  const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://netport-ihracat-asistani.vercel.app'}/api/webhooks/iyzico`
+  const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://netportai.com'}/api/webhooks/iyzico`
 
   // Iyzico checkout için minimum buyer info — gerçek isim/soyisim profile'dan çekilebilir,
   // şimdilik email split + placeholder.

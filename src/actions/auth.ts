@@ -19,6 +19,7 @@ export async function signUp(_prevState: unknown, formData: FormData) {
     password: formData.get('password') as string,
     options: {
       data: { full_name: formData.get('full_name') as string },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://netportai.com'}/auth/callback`,
     },
   })
   if (error) return { error: error.message }
