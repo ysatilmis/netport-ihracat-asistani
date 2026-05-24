@@ -63,14 +63,18 @@ function softenDataGaps(input: string): string {
     `\\*\\*\\s*(?:${escaped})\\s*\\*\\*|==\\s*(?:${escaped})\\s*==`,
     'gi',
   )
-  let out = input.replace(wrappedRe, '*~ tahmini veri yok*')
-  // 2. plain text occurence (bold/mark wrap olmadan) → italic mute
+  let out = input.replace(wrappedRe, '*~*')
+  // 2. plain text occurence (bold/mark wrap olmadan) → minimal tilde
   const plainRe = new RegExp(`(?<![\\*\\w])(?:${escaped})(?!\\*)`, 'gi')
-  out = out.replace(plainRe, '*~ tahmini veri yok*')
-  // 3. Bullet satırı tamamen "X: ~ tahmini veri yok" → satırı sil
-  //    (örn: "- Türkiye payı: ~ tahmini veri yok.")
+  out = out.replace(plainRe, '*~*')
+  // 3. Bullet/lines containing only data-gap → satırı sil
   out = out.replace(
-    /^[ \t]*[-*•]\s+[^:\n]{1,60}:\s*\*~ tahmini veri yok\*\s*[.,;:!?]*\s*\n?/gm,
+    /^[ \t]*[-*•]\s+[^:\n]{1,80}:\s*\*~\*\s*[.,;:!?]*\s*\n?/gm,
+    '',
+  )
+  // 4. Lines with ⚠️ Tahmini değer pattern → sil
+  out = out.replace(
+    /^.*⚠[️️]?\s*Tahmini değer.*(?:\n|$)/gm,
     '',
   )
   return out

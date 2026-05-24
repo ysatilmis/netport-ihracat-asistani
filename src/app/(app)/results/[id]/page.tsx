@@ -51,9 +51,15 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
     year: 'numeric',
   })
 
+  const sectionFilter = (s: { key: string }) => {
+    const sec = report.report_sections?.[s.key]
+    if (!sec) return false
+    return (sec.text ?? '').replace(/\s+/g, ' ').trim().length > 80
+  }
+
   const tocItems: TocItem[] = isFullReport
     ? REPORT_SECTIONS
-        .filter((s) => report.report_sections![s.key])
+        .filter(sectionFilter)
         .map((s) => ({
           id: s.key,
           title: s.title,
@@ -65,7 +71,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
     ? `# ${product}${country ? ` — ${country}` : ''}\n\n` +
       `Tarih: ${dateStr}\n\n---\n\n` +
       REPORT_SECTIONS
-        .filter((s) => report.report_sections![s.key])
+        .filter(sectionFilter)
         .map((s) => `## ${s.title}\n\n${report.report_sections![s.key].text}`)
         .join('\n\n---\n\n')
     : report.output_text

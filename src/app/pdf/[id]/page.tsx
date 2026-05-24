@@ -50,13 +50,14 @@ function softenDataGaps(input: string): string {
     `\\*\\*\\s*(?:${escaped})\\s*\\*\\*|==\\s*(?:${escaped})\\s*==`,
     'gi',
   )
-  let out = input.replace(wrappedRe, '*~ tahmini veri yok*')
+  let out = input.replace(wrappedRe, '*~*')
   const plainRe = new RegExp(`(?<![\\*\\w])(?:${escaped})(?!\\*)`, 'gi')
-  out = out.replace(plainRe, '*~ tahmini veri yok*')
+  out = out.replace(plainRe, '*~*')
   out = out.replace(
-    /^[ \t]*[-*•]\s+[^:\n]{1,60}:\s*\*~ tahmini veri yok\*\s*[.,;:!?]*\s*\n?/gm,
+    /^[ \t]*[-*•]\s+[^:\n]{1,80}:\s*\*~\*\s*[.,;:!?]*\s*\n?/gm,
     '',
   )
+  out = out.replace(/^.*⚠[️️]?\s*Tahmini değer.*(?:\n|$)/gm, '')
   return out
 }
 
@@ -82,9 +83,26 @@ function styleKaynakCitations(input: string): string {
 
 function buildFullReportMarkdown(reportSections: Record<string, { title: string; text: string; phase: number }> | null): string {
   if (!reportSections) return ''
+
+  const PHASE_BREAKS = new Set([2, 3, 4]) // Phase transitions get page break
+  let lastPhase = 0
+
   return REPORT_SECTIONS
-    .filter((s) => reportSections[s.key])
-    .map((s) => `## ${s.title}\n\n${reportSections[s.key].text}`)
+    .filter((s) => {
+      const sec = reportSections[s.key]
+      if (!sec) return false
+      // Skip sections with very short content (< 80 chars after trimming)
+      const text = (sec.text ?? '').replace(/\s+/g, ' ').trim()
+      return text.length > 80
+    })
+    .map((s, i) => {
+      const phase = s.phase
+      const prefix = (i > 0 && PHASE_BREAKS.has(phase) && phase !== lastPhase)
+        ? '\n<div class="page-break"></div>\n\n'
+        : ''
+      lastPhase = phase
+      return `${prefix}## ${s.title}\n\n${reportSections[s.key].text}`
+    })
     .join('\n\n---\n\n')
 }
 
@@ -146,10 +164,10 @@ export default async function ReportPdfPage({ params }: Props) {
     @media print {
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .no-print { display: none !important; }
-      h2 { break-before: page; }
-      h2:first-of-type { break-before: avoid; }
-      table, pre { break-inside: avoid; }
-      hr { break-after: avoid; }
+      .page-break { break-before: page; }
+      h2, h3, h4 { break-after: avoid; }
+      table, pre, blockquote { break-inside: avoid; }
+      p { orphans: 3; widows: 3; }
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
