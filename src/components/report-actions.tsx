@@ -40,7 +40,7 @@ export function ReportActions({ reportId, fullMarkdown }: ReportActionsProps) {
         {copied === 'markdown' ? '✓ Kopyalandı' : '📋 Markdown'}
       </ActionButton>
       <Divider />
-      <ActionButton onClick={() => window.print()}>
+      <ActionButton onClick={() => window.open(`/pdf/${reportId}`, '_blank')}>
         🖨️ Yazdır / PDF
       </ActionButton>
       <Divider />

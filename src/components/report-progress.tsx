@@ -33,7 +33,7 @@ export function ReportProgress({ completedSections, currentSection, currentPhase
         <span className="text-sm font-semibold text-slate-900">
           {isDone ? '✅ Rapor tamamlandı' : '⏳ Rapor oluşturuluyor...'}
         </span>
-        <span className="text-xs font-mono text-slate-500 tabular-nums">
+        <span className="text-sm font-mono text-slate-500 tabular-nums">
           {completedSections} / {TOTAL_SECTIONS} bölüm · {percentage}%
         </span>
       </div>
@@ -64,14 +64,14 @@ export function ReportProgress({ completedSections, currentSection, currentPhase
           if (phaseDone) {
             cardStyle = { backgroundColor: visual.bg, borderColor: visual.line }
             statusEl = (
-              <span className="text-[10px] font-mono font-semibold uppercase tracking-wider" style={{ color: visual.fg }}>
+              <span className="text-[11px] font-mono font-semibold uppercase tracking-wider" style={{ color: visual.fg }}>
                 ✓ Tamamlandı
               </span>
             )
           } else if (phaseActive) {
             cardStyle = { backgroundColor: '#FFFFFF', borderColor: visual.color, borderWidth: 2 }
             statusEl = (
-              <span className="text-[10px] font-mono font-semibold uppercase tracking-wider inline-flex items-center gap-1" style={{ color: visual.color }}>
+              <span className="text-[11px] font-mono font-semibold uppercase tracking-wider inline-flex items-center gap-1" style={{ color: visual.color }}>
                 <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: visual.color }} />
                 Aktif
               </span>
@@ -97,7 +97,7 @@ export function ReportProgress({ completedSections, currentSection, currentPhase
                 <span className="mr-1.5">{visual.emoji}</span>
                 {PHASE_META[phase].title}
               </h4>
-              <p className="text-xs text-slate-500 leading-snug mb-2">
+              <p className="text-sm text-slate-500 leading-snug mb-2">
                 {PHASE_DESC[phase]}
               </p>
               {statusEl}

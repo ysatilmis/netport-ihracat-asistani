@@ -22,7 +22,7 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
   )
 
   // Hydrate from sessionStorage after first client render to avoid SSR
-  // hydration mismatch. Safe to call multiple times â€” guarded internally.
+  // hydration mismatch. Safe to call multiple times — guarded internally.
   useEffect(() => {
     streamer.hydrateFromStorage()
   }, [streamer])
@@ -55,55 +55,72 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
 
   return (
     <div className="flex flex-col items-center">
-      {/* V3 Hero gradient banner */}
-      <div className="w-full hero-gradient -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-6 md:py-8 mb-4 border-b border-slate-200/60">
-        <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-3 md:mb-4 leading-[1.08]">
-          İhracat Pazar Analizi
-        </h1>
-        {reportProduct && (
-          <p className="mb-4 text-base font-medium text-slate-600 md:text-lg">
-            <span className="bg-gradient-to-r from-[var(--accent)] to-red-600 bg-clip-text text-transparent font-semibold">{reportProduct}</span> için rapor
-          </p>
+      {/* Hero + Form (yan yana lg+) — sadece form aşamasında grid, diğer aşamalarda hero tam genişlik */}
+      <div className={step === 'form' ? "w-full grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start" : "w-full"}>
+        {/* V3 Hero gradient banner */}
+        <div className="hero-gradient -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-6 md:py-8 mb-4 border-b border-slate-200/60">
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-3 md:mb-4 leading-[1.08]">
+            İhracat Pazar Analizi
+          </h1>
+          {reportProduct && (
+            <p className="mb-4 text-base font-medium text-slate-600 md:text-lg">
+              <span className="bg-gradient-to-r from-[var(--accent)] to-red-600 bg-clip-text text-transparent font-semibold">{reportProduct}</span> için rapor
+            </p>
+          )}
+          <ol className="max-w-2xl space-y-2 text-base md:text-lg text-slate-700">
+            <li className="flex items-start gap-3">
+              <span
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                style={{ backgroundColor: 'var(--accent)' }}
+              >
+                1
+              </span>
+              <div>
+                <span className="font-semibold text-slate-900">Ürününü yaz.</span> Ne ihraç etmek istediğini kısaca anlat.
+              </div>
+            </li>
+            <li className="flex items-start gap-3">
+              <span
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                style={{ backgroundColor: 'var(--accent)' }}
+              >
+                2
+              </span>
+              <div>
+                <span className="font-semibold text-slate-900">AI en uygun 3 ihracat pazarını önerir</span> — büyüklük + neden uygun.
+              </div>
+            </li>
+            <li className="flex items-start gap-3">
+              <span
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                style={{ backgroundColor: 'var(--accent)' }}
+              >
+                3
+              </span>
+              <div>
+                <span className="font-semibold text-slate-900">Pazarı seç.</span> Seçilen ülke için
+                10 bölümlük zincirleme analiz akar.
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        {/* Form — sağ taraf, grid ile yan yana */}
+        {step === 'form' && (
+          <div
+            className="h-fit mb-8 p-8 rounded-2xl bg-white border shadow-xl shadow-slate-200/40"
+            style={{ borderColor: 'var(--border)', borderTopWidth: '2px', borderTopColor: 'var(--accent)' }}
+          >
+            <ProductForm
+              defaultProduct={defaultProduct}
+              onSubmit={handleProductSubmit}
+              isLoading={isLoading}
+            />
+          </div>
         )}
-        <ol className="max-w-2xl space-y-2 text-base md:text-lg text-slate-700">
-          <li className="flex items-start gap-3">
-            <span
-              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-              style={{ backgroundColor: 'var(--accent)' }}
-            >
-              1
-            </span>
-            <div>
-              <span className="font-semibold text-slate-900">Ürününü yaz.</span> Ne ihraç etmek istediğini kısaca anlat.
-            </div>
-          </li>
-          <li className="flex items-start gap-3">
-            <span
-              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-              style={{ backgroundColor: 'var(--accent)' }}
-            >
-              2
-            </span>
-            <div>
-              <span className="font-semibold text-slate-900">AI en uygun 3 ihracat pazarını önerir</span> — büyüklük + neden uygun.
-            </div>
-          </li>
-          <li className="flex items-start gap-3">
-            <span
-              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-              style={{ backgroundColor: 'var(--accent)' }}
-            >
-              3
-            </span>
-            <div>
-              <span className="font-semibold text-slate-900">Pazarı seç.</span> Seçilen ülke için
-              10 bölümlük zincirleme analiz akar.
-            </div>
-          </li>
-        </ol>
       </div>
 
-      {/* AkÄ±ÅŸ gÃ¶stergesi â€” stream devam ediyorsa sayfaya tekrar girince sahnede kalsÄ±n */}
+      {/* Akış göstergesi — stream devam ediyorsa sayfaya tekrar girince sahnede kalsın */}
       {isLoading && (
         <div className="max-w-xl mb-6 p-3 rounded-xl bg-[var(--p1-bg)] border border-[var(--p1-line)] text-sm text-[var(--p1-fg)] flex items-center gap-2">
           <span className="inline-block w-2 h-2 rounded-full bg-[var(--phase-1)] animate-pulse" />
@@ -111,24 +128,10 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
         </div>
       )}
 
-      {/* Form */}
-      {step === 'form' && (
-        <div
-          className="max-w-2xl mx-auto mb-8 p-8 rounded-2xl bg-white border shadow-xl shadow-slate-200/40"
-          style={{ borderColor: 'var(--border)', borderTopWidth: '2px', borderTopColor: 'var(--accent)' }}
-        >
-          <ProductForm
-            defaultProduct={defaultProduct}
-            onSubmit={handleProductSubmit}
-            isLoading={isLoading}
-          />
-        </div>
-      )}
-
       {/* Error */}
       {error && errorCode === 'PROVIDER_LIMIT' && (
         <div className="max-w-xl mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
-          âš ï¸ {error}
+          ⚠️ {error}
           <button className="ml-3 underline text-amber-700 hover:text-amber-900" onClick={reset}>
             Tekrar dene
           </button>
@@ -136,13 +139,13 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
       )}
       {error && errorCode === 'TOKEN_LIMIT_EXCEEDED' && (
         <div className="max-w-xl mb-6 p-4 rounded-xl bg-blue-50 border border-blue-200 text-sm text-blue-800 flex items-center justify-between gap-3 flex-wrap">
-          <span>ğŸ”’ {error}</span>
+          <span>🔒 {error}</span>
           <a
             href="/pricing"
             className="font-semibold text-white px-3 py-1.5 rounded-lg text-xs"
             style={{ backgroundColor: 'var(--primary)' }}
           >
-            Plan YÃ¼kselt â†’
+            Plan Yükselt →
           </a>
         </div>
       )}
@@ -155,10 +158,10 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
         </div>
       )}
 
-      {/* AraÅŸtÄ±rma animasyonu â€” veri gelene kadar */}
+      {/* Araştırma animasyonu — veri gelene kadar */}
       {step === 'countries_streaming' && !countriesText && <SearchingAnimation />}
 
-      {/* AÅŸama 1 Ã§Ä±ktÄ±sÄ± â€” target_countries section'Ä± */}
+      {/* Aşama 1 çıktısı — target_countries section'ı */}
       {(step === 'countries_streaming' ||
         step === 'choosing' ||
         step === 'deep_dive' ||
@@ -168,7 +171,7 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
             title={TARGET_COUNTRIES_SECTION.title}
             text={
               step === 'choosing' && countriesText.length > 400
-                ? countriesText.slice(0, 400).trimEnd() + 'â€¦'
+                ? countriesText.slice(0, 400).trimEnd() + '...'
                 : countriesText
             }
             phase={1}
@@ -176,7 +179,7 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
           />
         )}
 
-      {/* Ãœlke seÃ§ici */}
+      {/* Ülke seçici */}
       {step === 'choosing' && countryOptions.length > 0 && (
         <CountryChooser
           countries={countryOptions}
@@ -186,13 +189,13 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
         />
       )}
 
-      {/* AÅŸama 2 (deep dive) progress */}
+      {/* Aşama 2 (deep dive) progress */}
       {(step === 'deep_dive' || step === 'done') && (
         <>
           <div className="my-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm bg-[var(--p1-bg)] text-[var(--p1-fg)] border border-[var(--p1-line)]">
-            <span aria-hidden>ğŸ¯</span>
+            <span aria-hidden>🎯</span>
             <span>
-              SeÃ§ilen pazar: <strong>{selectedCountry}</strong> â€” 10 bÃ¶lÃ¼m bu Ã¼lkeye Ã¶zel.
+              Seçilen pazar: <strong>{selectedCountry}</strong> — 10 bölüm bu ülkeye özel.
             </span>
           </div>
           <ReportProgress
@@ -214,17 +217,17 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
         </>
       )}
 
-      {/* Done â€” kaydedildi + faz B + yeni rapor */}
+      {/* Done — kaydedildi + faz B + yeni rapor */}
       {step === 'done' && (
         <div className="mt-6 flex flex-col gap-3">
           {savedReportId && (
             <div className="p-4 rounded-xl bg-[var(--p2-bg)] border border-[var(--p2-line)] text-sm flex items-center justify-between gap-3 flex-wrap">
-              <span className="text-[var(--p2-fg)] font-medium">âœ… Rapor otomatik kaydedildi.</span>
+              <span className="text-[var(--p2-fg)] font-medium">✅ Rapor otomatik kaydedildi.</span>
               <a
                 href={`/results/${savedReportId}`}
                 className="font-medium text-[var(--p2-fg)] hover:underline"
               >
-                ğŸ“„ RaporlarÄ±m&apos;da gÃ¶rÃ¼ntÃ¼le â†’
+                📄 Raporlarım'da görüntüle →
               </a>
             </div>
           )}
@@ -235,14 +238,14 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
             >
               <div>
                 <div className="font-semibold text-slate-900 mb-0.5">
-                  ğŸ¯ Faz B â€” KonumlandÄ±rma Paketi
+                  🎯 Faz B — Konumlandırma Paketi
                 </div>
                 <p className="text-sm text-slate-600">
-                  {selectedCountry} iÃ§in USP, alÄ±cÄ± persona&apos;larÄ±, hedef dilde Ã¼rÃ¼n
-                  aÃ§Ä±klamasÄ± ve cold email taslaklarÄ±.
+                  {selectedCountry} için USP, alıcı persona'ları, hedef dilde ürün
+                  açıklaması ve cold email taslakları.
                 </p>
               </div>
-              <span className="text-sm text-slate-500 whitespace-nowrap">Devam et â†’</span>
+              <span className="text-sm text-slate-500 whitespace-nowrap">Devam et →</span>
             </a>
           )}
           <button
@@ -250,7 +253,7 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
             style={{ color: 'var(--muted-foreground)' }}
             onClick={reset}
           >
-            + Yeni rapor oluÅŸtur
+            + Yeni rapor oluştur
           </button>
         </div>
       )}

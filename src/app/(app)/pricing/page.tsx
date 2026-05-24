@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { REPORT_PACK, PLAN_REPORT_LIMITS } from '@/lib/stripe'
+import { REPORT_PACKS, PLAN_REPORT_LIMITS } from '@/lib/stripe'
 import { getMonthlyUsage } from '@/lib/token'
 import { iyzicoConfigured } from '@/lib/iyzico'
 import { IyzicoCheckoutButton } from '@/components/iyzico-checkout-button'
@@ -11,12 +11,17 @@ export const metadata: Metadata = {
   title: 'Fiyatlandırma — Netport İhracat Asistanı',
 }
 
-// WhatsApp manuel ödeme akışı — Iyzico entegrasyonu canlıya gelene kadar geçici.
-const WHATSAPP_NUMBER = '905069003820'
-const WHATSAPP_MESSAGE = encodeURIComponent(
-  'Merhaba, Netport için 3 ek rapor paketi (₺499) satın almak istiyorum.',
-)
-const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`
+// Yüksel Hanım'ın WhatsApp numarası
+const WHATSAPP_NUMBER = '905321377158'
+
+function buildWhatsAppUrl(userEmail?: string | null, packLabel?: string, packPrice?: number) {
+  const emailPart = userEmail ? `,${userEmail} kullanıcı hesabım için` : ''
+  const packPart = packLabel && packPrice ? ` ${packLabel} (₺${packPrice})` : ' ek rapor paketi'
+  const message = encodeURIComponent(
+    `Merhaba, Netport İhracat AI uygulamasından ulaşıyorum${emailPart}${packPart} satın almak istiyorum.`,
+  )
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`
+}
 
 export default async function PricingPage() {
   const supabase = await createClient()
@@ -47,10 +52,10 @@ export default async function PricingPage() {
         <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-3 leading-[1.08]">
           Aylık <span className="bg-gradient-to-r from-[var(--accent)] to-red-600 bg-clip-text text-transparent">2 rapor ücretsiz</span>.
           <br className="hidden md:block" />
-          Daha fazlası mı? Pack alırsın.
+          Daha fazlası mı? Paket al.
         </h1>
         <p className="text-base text-slate-600 max-w-xl mx-auto leading-relaxed">
-          Karmaşık plan yok. Her ay 2 tam ihracat raporu hakkın var. Bittiyse 3'lük paket satın al.
+          Karmaşık plan yok. Her ay 2 tam ihracat raporu hakkın var. Bittiyse ek paket satın al.
           Mevcut periyodun sonuna kadar kullanılır.
         </p>
       </div>
@@ -59,7 +64,7 @@ export default async function PricingPage() {
       {user && (
         <div className="mb-10 rounded-2xl bg-white border border-slate-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6">
           <div className="flex items-baseline justify-between flex-wrap gap-3 mb-3">
-            <h2 className="text-lg font-semibold text-slate-900">Mevcut Durum</h2>
+            <h2 className="text-lg font-semibold text-slate-900">Mevcut Durumun</h2>
             <span className="text-sm text-slate-500 font-mono">
               {limit < 0 ? 'Sınırsız (Pro)' : `${used} / ${limit} rapor`}
             </span>
@@ -83,11 +88,11 @@ export default async function PricingPage() {
           <p className="text-sm text-slate-600">
             {remaining === 0 ? (
               <>
-                <span className="font-semibold text-red-600">Aylık hakkın bitti.</span> Ek 3 rapor için aşağıdaki paketi al.
+                <span className="font-semibold text-red-600">Aylık hakkın bitti.</span> Aşağıdan ek paket alabilirsin.
               </>
             ) : remaining <= 1 ? (
               <>
-                <span className="font-semibold text-amber-700">{remaining} rapor hakkın kaldı.</span> Yetmezse aşağıdaki paketi al.
+                <span className="font-semibold text-amber-700">{remaining} rapor hakkın kaldı.</span> Yetmezse aşağıdan paket al.
               </>
             ) : (
               <>
@@ -98,105 +103,146 @@ export default async function PricingPage() {
         </div>
       )}
 
-      {/* Tek paket — Notion/Stripe V3 stil */}
-      <div className="mb-10">
-        <div className="rounded-3xl bg-white border-2 border-[var(--accent)]/30 ring-2 ring-[var(--accent)]/15 shadow-[0_8px_32px_rgba(232,86,10,0.12)] overflow-hidden relative">
-          {/* Gradient ribbon */}
+      {/* Paketler */}
+      <div className="grid gap-6 mb-10 md:grid-cols-2">
+        {REPORT_PACKS.map((pack) => (
           <div
-            className="h-2 w-full"
-            style={{ background: 'linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%)' }}
-            aria-hidden
-          />
+            key={pack.id}
+            className={`rounded-3xl bg-white border-2 overflow-hidden relative ${
+              pack.popular
+                ? 'border-[var(--accent)]/40 ring-2 ring-[var(--accent)]/20 shadow-[0_8px_32px_rgba(232,86,10,0.14)]'
+                : 'border-slate-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)]'
+            }`}
+          >
+            {/* Gradient ribbon */}
+            <div
+              className="h-2 w-full"
+              style={{
+                background: pack.popular
+                  ? 'linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%)'
+                  : 'linear-gradient(90deg, #94a3b8 0%, #64748b 100%)',
+              }}
+              aria-hidden
+            />
 
-          <div className="p-8 md:p-10">
-            <div className="flex items-baseline justify-between flex-wrap gap-3 mb-2">
-              <h3 className="text-2xl font-bold text-slate-900 tracking-tight">{REPORT_PACK.label}</h3>
-              <span className="text-[11px] font-mono font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[var(--accent)]/10 text-[var(--accent-strong)] border border-[var(--accent)]/30">
-                Tek Seferlik
-              </span>
-            </div>
-
-            <div className="mb-6">
-              <span className="text-5xl md:text-6xl font-bold text-slate-900 tracking-tight">₺{REPORT_PACK.priceTry}</span>
-              <span className="text-lg text-slate-400 ml-3 font-mono">·  {REPORT_PACK.reports} rapor</span>
-            </div>
-
-            <p className="text-base text-slate-600 mb-6 leading-relaxed">{REPORT_PACK.description}</p>
-
-            <ul className="space-y-3 mb-8">
-              {[
-                '3 tam ihracat pazar raporu',
-                'Aylık hakkına ek olarak çalışır',
-                'Tek seferlik — abonelik yok',
-                'Mevcut periyod boyunca geçerli',
-              ].map((feat) => (
-                <li key={feat} className="flex items-start gap-3 text-sm text-slate-700">
-                  <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center">
-                    <Check className="h-3 w-3 text-emerald-600" strokeWidth={3} />
-                  </span>
-                  <span className="leading-snug">{feat}</span>
-                </li>
-              ))}
-            </ul>
-
-            {/* CTA — Iyzico hazırsa kartla öde butonu, değilse WhatsApp fallback */}
-            {!user ? (
-              <Link
-                href="/register"
-                className="block w-full text-center px-6 py-4 rounded-xl bg-gradient-to-br from-[var(--accent)] to-red-600 text-white font-semibold text-base shadow-[0_4px_16px_rgba(232,86,10,0.25)] hover:shadow-[0_6px_24px_rgba(232,86,10,0.35)] hover:-translate-y-0.5 transition-all"
-              >
-                Önce Kayıt Ol
-              </Link>
-            ) : iyzicoConfigured ? (
-              <IyzicoCheckoutButton priceTry={REPORT_PACK.priceTry} />
-            ) : (
-              <a
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full text-center px-6 py-4 rounded-xl bg-gradient-to-br from-[var(--accent)] to-red-600 text-white font-semibold text-base shadow-[0_4px_16px_rgba(232,86,10,0.25)] hover:shadow-[0_6px_24px_rgba(232,86,10,0.35)] hover:-translate-y-0.5 transition-all"
-              >
-                <span className="inline-flex items-center gap-2">
-                  <span>WhatsApp ile İletişim</span>
-                  <span aria-hidden>→</span>
+            {pack.popular && (
+              <div className="absolute top-4 right-4">
+                <span className="text-[11px] font-mono font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[var(--accent)]/10 text-[var(--accent-strong)] border border-[var(--accent)]/30">
+                  En Popüler
                 </span>
-              </a>
+              </div>
             )}
 
-            <p className="text-center text-xs text-slate-400 mt-4">
-              {!user
-                ? 'Kayıt ücretsiz, 2 rapor hakkın hemen aktif'
-                : iyzicoConfigured
-                  ? 'Kartla güvenli ödeme — 3D Secure korumalı'
-                  : 'Ödeme şu an manuel — Iyzico kart ödemesi yakında entegre olacak'}
-            </p>
+            <div className="p-8 md:p-10">
+              <div className="flex items-baseline justify-between flex-wrap gap-3 mb-2">
+                <h3 className="text-2xl font-bold text-slate-900 tracking-tight">{pack.label}</h3>
+                <span className="text-[11px] font-mono font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[var(--accent)]/10 text-[var(--accent-strong)] border border-[var(--accent)]/30">
+                  Tek Seferlik
+                </span>
+              </div>
+
+              {/* Fiyat — strikethrough + indirim */}
+              <div className="mb-6">
+                <div className="flex items-baseline gap-3 flex-wrap">
+                  <span className="text-5xl md:text-6xl font-bold text-slate-900 tracking-tight">
+                    ₺{pack.priceTry.toLocaleString('tr-TR')}
+                  </span>
+                  <span className="text-2xl text-slate-400 line-through decoration-2 decoration-red-400/60 font-medium">
+                    ₺{pack.originalPrice.toLocaleString('tr-TR')}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 border border-red-200 text-xs font-bold text-red-600">
+                    <span aria-hidden>⚡</span>
+                    Kısa süreliğine
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    %{Math.round((1 - pack.priceTry / pack.originalPrice) * 100)} indirim
+                  </span>
+                </div>
+                <span className="text-lg text-slate-400 ml-0 mt-2 inline-block font-mono">
+                  · {pack.reports} rapor
+                </span>
+              </div>
+
+              <p className="text-base text-slate-600 mb-6 leading-relaxed">{pack.description}</p>
+
+              <ul className="space-y-3 mb-8">
+                {[
+                  `${pack.reports} tam ihracat pazar raporu`,
+                  'Aylık hakkına ek olarak çalışır',
+                  'Tek seferlik — abonelik yok',
+                  'Mevcut periyod boyunca geçerli',
+                ].map((feat) => (
+                  <li key={feat} className="flex items-start gap-3 text-sm text-slate-700">
+                    <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+                      <Check className="h-3 w-3 text-emerald-600" strokeWidth={3} />
+                    </span>
+                    <span className="leading-snug">{feat}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* CTA */}
+              {!user ? (
+                <Link
+                  href="/register"
+                  className={`block w-full text-center px-6 py-4 rounded-xl text-white font-semibold text-base shadow-[0_4px_16px_rgba(232,86,10,0.25)] hover:shadow-[0_6px_24px_rgba(232,86,10,0.35)] hover:-translate-y-0.5 transition-all ${
+                    pack.popular
+                      ? 'bg-gradient-to-br from-[var(--accent)] to-red-600'
+                      : 'bg-gradient-to-br from-slate-700 to-slate-800'
+                  }`}
+                >
+                  Önce Kayıt Ol
+                </Link>
+              ) : iyzicoConfigured ? (
+                <IyzicoCheckoutButton priceTry={pack.priceTry} />
+              ) : (
+                <a
+                  href={buildWhatsAppUrl(user.email, pack.label, pack.priceTry)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`block w-full text-center px-6 py-4 rounded-xl text-white font-semibold text-base shadow-[0_4px_16px_rgba(232,86,10,0.25)] hover:shadow-[0_6px_24px_rgba(232,86,10,0.35)] hover:-translate-y-0.5 transition-all ${
+                    pack.popular
+                      ? 'bg-gradient-to-br from-[var(--accent)] to-red-600'
+                      : 'bg-gradient-to-br from-slate-700 to-slate-800'
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <span>WhatsApp ile Satın Al</span>
+                    <span aria-hidden>→</span>
+                  </span>
+                </a>
+              )}
+
+              <p className="text-center text-xs text-slate-400 mt-4">
+                {!user
+                  ? 'Kayıt ücretsiz, 2 rapor hakkın hemen aktif'
+                  : iyzicoConfigured
+                    ? 'Kartla güvenli ödeme — 3D Secure korumalı'
+                    : 'WhatsApp üzerinden Yüksel Hanım\'a ulaş, ödemeni yap, raporların hesabına tanımlansın'}
+              </p>
+            </div>
           </div>
-        </div>
+        ))}
       </div>
 
       {/* Bilgi notu */}
-      <div className="rounded-2xl bg-[var(--p1-bg)] border border-[var(--p1-line)] p-5 mb-8">
+      <div className="rounded-2xl bg-[var(--p1-bg)] border border-[var(--p1-line)] p-5">
         <div className="flex gap-3 items-start">
           <div className="text-2xl">💳</div>
           <div className="flex-1">
-            <h4 className="text-sm font-semibold text-[var(--p1-fg)] mb-1">Ödeme yöntemleri yakında</h4>
+            <h4 className="text-sm font-semibold text-[var(--p1-fg)] mb-1">Nasıl çalışır?</h4>
             <p className="text-sm text-slate-700 leading-relaxed">
-              Şu an satın alma WhatsApp üzerinden manuel kart ödemesi (Iyzico link) ile yapılıyor.
-              Kısa süre içinde kart ödemesi doğrudan siteye entegre olacak. Sorularınız için WhatsApp:{' '}
+              WhatsApp ile Yüksel Hanım'a ulaşırsın. Email adresin mesajda otomatik iletilir.
+              Ödeme linki email'ine gelir, kredi kartınla ödersin. Ödeme onaylanınca rapor hakların
+              hesabına eklenir. Soruların için:{' '}
               <a href={`https://wa.me/${WHATSAPP_NUMBER}`} className="font-medium text-[var(--primary)] hover:underline">
-                +90 506 900 38 20
+                +90 532 137 71 58
               </a>
             </p>
           </div>
         </div>
-      </div>
-
-      {/* Pro plan placeholder */}
-      <div className="text-center text-sm text-slate-400">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-full">
-          <span aria-hidden>⏳</span>
-          <span>Aylık sınırsız (Pro) plan yakında</span>
-        </span>
       </div>
     </main>
   )

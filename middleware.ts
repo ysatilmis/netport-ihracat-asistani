@@ -45,11 +45,23 @@ export async function middleware(request: NextRequest) {
   }
 
   if (path.startsWith('/admin')) {
-    if (!user) return NextResponse.redirect(new URL('/login', request.url))
+    // /admin/login herkese açık
+    if (path === '/admin/login') {
+      return supabaseResponse
+    }
+
+    if (!user) return NextResponse.redirect(new URL('/admin/login', request.url))
+
+    // Auto-admin: ADMIN_EMAIL ile eşleşen kullanıcıya rol sormadan izin ver
+    const adminEmails = (process.env.ADMIN_EMAIL || '').split(',').map(e => e.trim().toLowerCase())
+    if (user.email && adminEmails.includes(user.email.toLowerCase())) {
+      return supabaseResponse
+    }
+
     const { data: userData } = await supabase
       .from('users').select('role').eq('id', user.id).single()
     if (userData?.role !== 'admin') {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+      return NextResponse.redirect(new URL('/admin/login', request.url))
     }
   }
 

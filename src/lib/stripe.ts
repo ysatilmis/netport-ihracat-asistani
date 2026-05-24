@@ -30,16 +30,32 @@ export const PLAN_REPORT_LIMITS: Record<PlanTier, number> = {
   pro: -1,
 }
 
-// Tek paket: 3 ek rapor — Iyzico ile satın alınır.
+// Ek rapor paketleri — Iyzico üzerinden manuel satın alınır.
 // subscriptions.extra_tokens column'ı bu pack'lerden gelen rapor sayısını tutar
 // (semantik 2026-05-19'da "extra_tokens" → "extra_reports" oldu, column adı korunur).
-export const REPORT_PACK = {
-  id: 'pack3',
-  reports: 3,
-  priceTry: 499,
-  label: '3 Ek Rapor',
-  description: 'Aylık 3 rapor hakkın bittiyse 3 ek rapor satın al. Mevcut periyodun sonuna kadar kullanılır.',
-} as const
+export const REPORT_PACKS = [
+  {
+    id: 'pack3',
+    reports: 3,
+    priceTry: 499,
+    originalPrice: 999,
+    label: '3 Ek Rapor',
+    description: 'Aylık rapor hakkın bittiyse 3 ek rapor satın al. Mevcut periyodun sonuna kadar kullanılır.',
+    popular: false,
+  },
+  {
+    id: 'pack10',
+    reports: 10,
+    priceTry: 1299,
+    originalPrice: 2499,
+    label: '10 Ek Rapor',
+    description: 'Daha fazla ihracat pazarı analizi için 10 ek rapor. En çok tercih edilen paket.',
+    popular: true,
+  },
+] as const
+
+// Backward-compat: bazı dosyalar hâlâ REPORT_PACK'e referans veriyor.
+export const REPORT_PACK = REPORT_PACKS[0]
 
 // Backward-compat: bazı dosyalar hâlâ ESTIMATED_TOKENS_PER_REPORT'a referans veriyor.
 // Token meter'da artık kullanılmıyor ama silmiyoruz (compile uyum).
