@@ -13,7 +13,6 @@ async function requireAdmin() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
 
-  // Auto-admin: ADMIN_EMAIL ile eşleşen kullanıcıya izin ver
   const adminEmails = (process.env.ADMIN_EMAIL || '').split(',').map(e => e.trim().toLowerCase())
   if (user.email && adminEmails.includes(user.email.toLowerCase())) {
     return user
@@ -104,8 +103,20 @@ export async function getAdminDashboardKpis() {
   await requireAdmin()
   const supabase = await createServiceClient()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { count: totalUsers } = await (supabase.from('users') as any).select('*', { count: 'exact', head: true }) as { count: number }
+  // Use auth.admin to count ALL users, not just public.users
+  let totalUsers = 0
+  try {
+    const { data: { users: authUsers } } = await supabase.auth.admin.listUsers({ perPage: 1 })
+    // listUsers returns total in the response; if not available, fall back to public.users count
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { count: publicCount } = await (supabase.from('users') as any).select('*', { count: 'exact', head: true }) as { count: number }
+    totalUsers = Math.max(authUsers?.length ? (authUsers as unknown as { aud?: string }[]).length + (publicCount ?? 0) : publicCount ?? 0, publicCount ?? 0)
+  } catch {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { count } = await (supabase.from('users') as any).select('*', { count: 'exact', head: true }) as { count: number }
+    totalUsers = count ?? 0
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { count: totalReports } = await (supabase.from('reports') as any).select('*', { count: 'exact', head: true }) as { count: number }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -172,19 +183,29 @@ export async function getAdminRecentActivity() {
   }
 }
 
-// Enhanced user list with extra_tokens and report count
+// Enhanced user list — uses auth.admin.listUsers() to catch users missing from public.users
 export async function getAllUsersDetailed() {
   await requireAdmin()
   const supabase = await createServiceClient()
 
+  // Fetch all auth users (service_role gives access to auth.admin)
+  let authUsers: { id: string; email: string; created_at: string; user_metadata?: { full_name?: string } }[] = []
+  try {
+    const { data } = await supabase.auth.admin.listUsers()
+    authUsers = (data?.users ?? []) as unknown as typeof authUsers
+  } catch (err) {
+    console.error('[admin] auth.admin.listUsers failed:', err)
+    // fallback: just public.users
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: users } = await (supabase.from('users') as any)
+  const { data: publicUsers } = await (supabase.from('users') as any)
     .select('id, email, full_name, role, created_at')
     .order('created_at', { ascending: false }) as { data: Pick<UserRow, 'id' | 'email' | 'full_name' | 'role' | 'created_at'>[] | null }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: subs } = await (supabase.from('subscriptions') as any)
-    .select('*') as { data: (SubRow & { extra_tokens: number; stripe_customer_id: string | null; stripe_subscription_id: string | null })[] | null }
+    .select('*') as { data: (SubRow & { extra_tokens: number })[] | null }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: reportCounts } = await (supabase.from('reports') as any)
@@ -209,15 +230,58 @@ export async function getAllUsersDetailed() {
     }
   }
 
-  return (users ?? []).map((u) => {
-    const sub = subs?.find(s => s.user_id === u.id)
-    const pmt = paymentMap.get(u.id)
-    return {
-      ...u,
+  const publicUserMap = new Map((publicUsers ?? []).map(u => [u.id, u]))
+
+  // Merge: start with auth users, enrich with public.users data
+  const merged = new Map<string, {
+    id: string
+    email: string
+    full_name: string | null
+    role: string
+    created_at: string
+    sub: SubRow & { extra_tokens: number } | null
+    reportCount: number
+    paymentCount: number
+    paymentTotal: number
+  }>()
+
+  for (const au of authUsers) {
+    const pu = publicUserMap.get(au.id)
+    const pmt = paymentMap.get(au.id)
+    const sub = subs?.find(s => s.user_id === au.id)
+    merged.set(au.id, {
+      id: au.id,
+      email: au.email ?? pu?.email ?? '?',
+      full_name: pu?.full_name ?? au.user_metadata?.full_name ?? null,
+      role: pu?.role ?? 'user',
+      created_at: pu?.created_at ?? au.created_at,
       sub: sub ?? null,
-      reportCount: reportCountMap.get(u.id) ?? 0,
+      reportCount: reportCountMap.get(au.id) ?? 0,
       paymentCount: pmt?.count ?? 0,
       paymentTotal: pmt?.total ?? 0,
+    })
+  }
+
+  // Add any public.users not in auth (shouldn't happen but defensive)
+  for (const pu of publicUsers ?? []) {
+    if (!merged.has(pu.id)) {
+      const pmt = paymentMap.get(pu.id)
+      const sub = subs?.find(s => s.user_id === pu.id)
+      merged.set(pu.id, {
+        id: pu.id,
+        email: pu.email,
+        full_name: pu.full_name,
+        role: pu.role,
+        created_at: pu.created_at,
+        sub: sub ?? null,
+        reportCount: reportCountMap.get(pu.id) ?? 0,
+        paymentCount: pmt?.count ?? 0,
+        paymentTotal: pmt?.total ?? 0,
+      })
     }
-  })
+  }
+
+  return Array.from(merged.values()).sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  )
 }

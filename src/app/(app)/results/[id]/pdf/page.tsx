@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { REPORT_SECTIONS } from '@/lib/report-prompts'
+import { PrintButton } from '@/components/print-button'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -68,9 +70,25 @@ function styleKaynakCitations(input: string): string {
   )
 }
 
+function buildFullReportMarkdown(reportSections: Record<string, { title: string; text: string; phase: number }> | null): string {
+  if (!reportSections) return ''
+  return REPORT_SECTIONS
+    .filter((s) => reportSections[s.key])
+    .map((s) => `## ${s.title}\n\n${reportSections[s.key].text}`)
+    .join('\n\n---\n\n')
+}
+
 export default async function ReportPdfPage({ params }: Props) {
+  try {
   const { id } = await params
-  const supabase = await createClient()
+
+  let supabase
+  try {
+    supabase = await createClient()
+  } catch (e) {
+    return <ErrorDisplay title="Oturum hatası" message="Lütfen tekrar giriş yapın." detail={String(e)} />
+  }
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return notFound()
 
@@ -84,8 +102,9 @@ export default async function ReportPdfPage({ params }: Props) {
         id: string
         input_json: Record<string, string>
         output_text: string
-        created_at: string
+        report_sections: Record<string, { title: string; text: string; phase: number }> | null
         is_full_report: boolean
+        created_at: string
       } | null
       error: unknown
     }
@@ -101,7 +120,14 @@ export default async function ReportPdfPage({ params }: Props) {
   })
   const pdfTitle = `${product}${country ? ` → ${country}` : ''} | Netport Rapor`
 
-  const cleaned = softenDataGaps(styleKaynakCitations(unwrapTablesInCodeFences(report.output_text)))
+  const isFullReport = report.is_full_report === true
+  const reportSections = report.report_sections
+
+  const rawText = isFullReport && reportSections
+    ? buildFullReportMarkdown(reportSections)
+    : report.output_text
+
+  const cleaned = softenDataGaps(styleKaynakCitations(unwrapTablesInCodeFences(rawText)))
 
   return (
     <html lang="tr">
@@ -247,7 +273,7 @@ export default async function ReportPdfPage({ params }: Props) {
       </head>
       <body>
         <div className="no-print" style={{ textAlign: 'right', margin: '0 5mm 12px' }}>
-          <button className="btn" onClick={() => window.print()}>Yazdır / PDF Kaydet</button>
+          <PrintButton />
         </div>
 
         <header>
@@ -319,5 +345,36 @@ export default async function ReportPdfPage({ params }: Props) {
         </div>
       </body>
     </html>
+  )
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    const stack = e instanceof Error ? e.stack : ''
+    console.error('[pdf/results] render error:', msg, stack)
+    return (
+      <html lang="tr">
+        <head><meta charSet="utf-8" /><title>Rapor Hatası</title></head>
+        <body>
+          <ErrorDisplay title="Rapor yüklenemedi" message={msg} detail={stack} />
+        </body>
+      </html>
+    )
+  }
+}
+
+function ErrorDisplay({ title, message, detail }: { title: string; message: string; detail?: string }) {
+  return (
+    <div style={{ padding: 40, fontFamily: 'system-ui, sans-serif', maxWidth: 700, margin: '40px auto' }}>
+      <h1 style={{ color: '#dc2626', fontSize: '1.5rem', marginBottom: 12 }}>{title}</h1>
+      <p style={{ color: '#334155', marginBottom: 8 }}>{message}</p>
+      {detail && (
+        <pre style={{
+          background: '#f8fafc', border: '1px solid #e2e8f0', padding: 16, borderRadius: 8,
+          fontSize: '0.8rem', overflow: 'auto', maxHeight: 400, whiteSpace: 'pre-wrap'
+        }}>
+          {detail}
+        </pre>
+      )}
+      <a href="/dashboard" style={{ color: '#E8560A', display: 'inline-block', marginTop: 16 }}>Dashboard'a Dön</a>
+    </div>
   )
 }

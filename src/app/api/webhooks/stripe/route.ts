@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import type Stripe from 'stripe'
 
 export async function POST(req: NextRequest) {
@@ -18,7 +18,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  const supabase = await createClient()
+  // Service client — bypasses RLS, no session needed
+  const supabase = await createServiceClient()
+
+  // Idempotency: aynı event ID daha önce işlendiyse skip
+  const eventId = event.id
+  const { data: existing } = await supabase
+    .from('iyzico_pending_payments')
+    .select('conversation_id')
+    .eq('conversation_id', `stripe_${eventId}`)
+    .maybeSingle()
+
+  if (existing) {
+    console.log('[stripe webhook] Duplicate event skipped:', eventId)
+    return NextResponse.json({ received: true })
+  }
 
   try {
     switch (event.type) {
@@ -32,7 +46,6 @@ export async function POST(req: NextRequest) {
           break
         }
 
-        // Token paketi tek seferlik alımı — extra_tokens artır.
         if (metaType === 'token_pack') {
           const tokensRaw = session.metadata?.tokens ?? '0'
           const tokensAdded = parseInt(tokensRaw, 10) || 0
@@ -44,23 +57,22 @@ export async function POST(req: NextRequest) {
               .eq('user_id', userId)
               .single() as { data: { extra_tokens: number | null } | null; error: unknown }
 
-            const newExtra = (existing?.extra_tokens ?? 0) + tokensAdded
+            const currentExtra = existing?.extra_tokens ?? 0
+            const safeCurrent = isNaN(currentExtra) || currentExtra < 0 ? 0 : currentExtra > 10000 ? 10000 : currentExtra
+            const newExtra = safeCurrent + tokensAdded
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await (supabase.from('subscriptions') as any)
               .update({ extra_tokens: newExtra })
               .eq('user_id', userId)
 
             console.log('[stripe webhook] Token pack purchased', {
-              userId,
-              size: session.metadata?.pack_size,
-              tokensAdded,
-              newExtra,
+              userId, size: session.metadata?.pack_size, tokensAdded, newExtra,
             })
           }
           break
         }
 
-        // Subscription alımı (default).
         const tier = session.metadata?.tier ?? 'starter'
         const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id
         const tierLimits: Record<string, number> = { starter: 250000, pro: 500000, free: 80000 }
@@ -95,7 +107,7 @@ export async function POST(req: NextRequest) {
             const endDate = new Date((periodEnd ?? Date.now() / 1000 + 30 * 86400) * 1000)
               .toISOString().slice(0, 10)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('subscriptions') as any).update({
+            await (supabase.from('subscriptions') as any).update({
               current_period_end: endDate,
             }).eq('stripe_subscription_id', sub.id)
           }

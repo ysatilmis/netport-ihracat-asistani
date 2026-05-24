@@ -33,9 +33,13 @@ export async function saveReport(data: {
 
 export async function getReports(): Promise<ReportRow[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (supabase.from('reports') as any)
     .select('*')
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false }) as { data: ReportRow[] | null }
   return data ?? []
 }

@@ -1,10 +1,11 @@
 'use client'
 import { signUp } from '@/actions/auth'
 import Link from 'next/link'
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 
 export default function RegisterPage() {
   const [state, action, pending] = useActionState(signUp, undefined)
+  const [confirmError, setConfirmError] = useState('')
 
   // Show confirmation notice after successful signup
   if (state?.success) {
@@ -45,6 +46,17 @@ export default function RegisterPage() {
     )
   }
 
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    setConfirmError('')
+    const form = e.currentTarget
+    const pass = (form.elements.namedItem('password') as HTMLInputElement).value
+    const confirm = (form.elements.namedItem('confirm_password') as HTMLInputElement).value
+    if (pass !== confirm) {
+      e.preventDefault()
+      setConfirmError('Şifreler eşleşmiyor. Lütfen kontrol edin.')
+    }
+  }
+
   return (
     <div className="w-full">
       <div className="text-xs font-semibold uppercase tracking-wider text-[var(--accent)] mb-2">
@@ -57,7 +69,7 @@ export default function RegisterPage() {
         Free planla 2 rapor / ay. Kart bilgisi gerekmez.
       </p>
 
-      <form action={action} className="space-y-5">
+      <form action={action} onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-1.5">
           <label htmlFor="full_name" className="block text-sm font-medium text-slate-700">
             Ad Soyad
@@ -66,6 +78,7 @@ export default function RegisterPage() {
             id="full_name"
             name="full_name"
             required
+            minLength={2}
             placeholder="Adınız Soyadınız"
             className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/15 transition-all"
           />
@@ -99,6 +112,27 @@ export default function RegisterPage() {
             className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/15 transition-all"
           />
         </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor="confirm_password" className="block text-sm font-medium text-slate-700">
+            Şifre Tekrar
+          </label>
+          <input
+            id="confirm_password"
+            name="confirm_password"
+            type="password"
+            required
+            minLength={6}
+            placeholder="••••••••"
+            className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/15 transition-all"
+          />
+        </div>
+
+        {confirmError && (
+          <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+            {confirmError}
+          </div>
+        )}
 
         {state?.error && (
           <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">

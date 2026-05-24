@@ -1,23 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { iyzicoConfigured, retrieveCheckoutForm } from '@/lib/iyzico'
 import { REPORT_PACK } from '@/lib/stripe'
 
-/**
- * Iyzico callback — ödeme tamamlandıktan sonra Iyzico bu URL'e POST yapar.
- * Body içinde `token` field'ı gelir. Token ile `retrieveCheckoutForm` çağrılır,
- * paymentStatus=SUCCESS ise subscriptions.extra_tokens += REPORT_PACK.reports.
- *
- * Akış:
- *   1. token al → retrieve → conversationId + paymentStatus
- *   2. iyzico_pending_payments tablosunda conversationId match → user_id al
- *   3. Idempotency: aynı conversationId daha önce işlendiyse skip
- *   4. SUCCESS → extra_tokens += pack.reports + pending row'u 'completed' yap
- *   5. Kullanıcıyı /dashboard?payment=success'a redirect
- *
- * NOT: Iyzico callback POST application/x-www-form-urlencoded gönderir
- * (Stripe gibi JSON değil). Body.text() → URLSearchParams kullan.
- */
 export async function POST(req: NextRequest) {
   if (!iyzicoConfigured) {
     return NextResponse.json({ error: 'IYZICO_NOT_CONFIGURED' }, { status: 503 })
@@ -47,7 +32,8 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const supabase = await createClient()
+  // Service client — bypasses RLS, no session needed
+  const supabase = await createServiceClient()
 
   // Pending row'u conversationId ile bul
   const { data: pending } = await supabase
@@ -62,7 +48,6 @@ export async function POST(req: NextRequest) {
   }
 
   if (pending.status === 'completed') {
-    // Idempotent: zaten işlenmiş
     return NextResponse.redirect(new URL('/dashboard?payment=success', req.url), { status: 303 })
   }
 
@@ -74,16 +59,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.redirect(new URL('/pricing?payment=failed', req.url), { status: 303 })
   }
 
-  // SUCCESS — extra_tokens += pack.reports
   const reportCount = pending.report_count ?? REPORT_PACK.reports
 
+  // Atomic increment via RPC or direct value set
+  // postgres function not deployed yet — read-then-write with service client (no RLS)
   const { data: sub } = await supabase
     .from('subscriptions')
     .select('extra_tokens')
     .eq('user_id', pending.user_id)
     .single() as { data: { extra_tokens: number | null } | null; error: unknown }
 
-  const newExtra = (sub?.extra_tokens ?? 0) + reportCount
+  const currentExtra = sub?.extra_tokens ?? 0
+  // Sanity check: negative values, NaN, absurdly high values
+  const safeCurrent = isNaN(currentExtra) || currentExtra < 0 ? 0 : currentExtra > 10000 ? 10000 : currentExtra
+  const newExtra = safeCurrent + reportCount
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('subscriptions') as any)

@@ -19,25 +19,27 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
   const { id } = await params
   const supabase = await createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+
   const { data: report } = await supabase
     .from('reports')
     .select('*')
     .eq('id', id)
     .single() as {
       data: {
-        id: string
-        phase: number
-        prompt_key: string
+        id: string; user_id: string
+        phase: number; prompt_key: string
         input_json: Record<string, string>
         output_text: string
         report_sections: Record<string, ReportSectionData> | null
-        is_full_report: boolean
-        created_at: string
+        is_full_report: boolean; created_at: string
       } | null
       error: unknown
     }
 
   if (!report) notFound()
+  // Ownership check — kullanıcı sadece kendi raporunu görebilir
+  if (report.user_id !== user?.id) notFound()
 
   const inputs = report.input_json
   const isFullReport = report.is_full_report && report.report_sections

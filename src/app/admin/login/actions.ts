@@ -2,21 +2,33 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
-export async function adminSignIn(_prevState: unknown, formData: FormData) {
-  const supabase = await createClient()
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+export async function adminSignIn(_prevState: unknown, formData: FormData) {
+  const email = formData.get('email')
+  const password = formData.get('password')
+
+  if (!email || typeof email !== 'string' || !EMAIL_RE.test(email)) {
+    return { error: 'Geçerli bir e-posta adresi girin.' }
+  }
+  if (!password || typeof password !== 'string' || password.length < 6) {
+    return { error: 'Şifre en az 6 karakter olmalı.' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.signInWithPassword({
+    email: email as string,
+    password: password as string,
+  })
 
   if (error) {
     if (error.message.includes('Email not confirmed')) {
       return { error: 'Email adresiniz henüz onaylanmamış.' }
     }
-    if (error.message.includes('Invalid login')) {
+    if (error.message.includes('Invalid login') || error.message.includes('invalid')) {
       return { error: 'Email veya şifre hatalı.' }
     }
-    return { error: error.message }
+    return { error: 'Giriş yapılırken bir hata oluştu.' }
   }
 
   // Admin kontrolü
