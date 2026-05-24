@@ -60,8 +60,15 @@ export async function getMonthlyUsage(userId: string): Promise<{
   const planLimit = PLAN_REPORT_LIMITS[plan] ?? 3
   const extra = sub.extra_tokens ?? 0 // semantik: extra_reports
 
+  // Admin override: monthly_limit_tokens <= 1000 → report count override
+  // > 1000 → legacy token value (webhook), ignore. 0 → no override.
+  const adminOverride = sub.monthly_limit_tokens ?? 0
+  const baseLimit = (adminOverride > 0 && adminOverride <= 1000)
+    ? adminOverride
+    : planLimit
+
   // Pro = sınırsız (planLimit = -1) — extra eklenmiş olsa bile sınırsız kalır
-  const limit = planLimit < 0 ? -1 : planLimit + extra
+  const limit = baseLimit < 0 ? -1 : baseLimit + extra
 
   return {
     used,

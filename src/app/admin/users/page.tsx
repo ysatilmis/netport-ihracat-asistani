@@ -28,6 +28,7 @@ export default async function AdminUsersPage() {
                 <th className="px-5 py-3 text-left">Plan</th>
                 <th className="px-5 py-3 text-left">Ek Paket</th>
                 <th className="px-5 py-3 text-left">Rapor</th>
+                <th className="px-5 py-3 text-left">Kalan</th>
                 <th className="px-5 py-3 text-left">Ödeme</th>
                 <th className="px-5 py-3 text-left">Limit Güncelle</th>
               </tr>
@@ -48,6 +49,11 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
+function adminOverrideValue(sub: { monthly_limit_tokens: number } | null): string | number {
+  const v = sub?.monthly_limit_tokens ?? 0
+  return (v > 0 && v <= 1000) ? v : ''
+}
+
 function UserRow({ user }: {
   user: {
     id: string
@@ -63,6 +69,7 @@ function UserRow({ user }: {
       current_period_end: string
     } | null
     reportCount: number
+    reportLimit: number
     paymentCount: number
     paymentTotal: number
   }
@@ -70,11 +77,13 @@ function UserRow({ user }: {
   const sub = user.sub
   const plan = sub?.plan ?? 'free'
   const extraPacks = sub?.extra_tokens ?? 0
+  const limit = user.reportLimit
+  const remaining = limit < 0 ? Infinity : Math.max(0, limit - user.reportCount)
 
   async function handleUpdate(formData: FormData) {
     'use server'
     const newLimit = parseInt(formData.get('limit') as string)
-    if (!isNaN(newLimit) && newLimit > 0) {
+    if (!isNaN(newLimit) && newLimit >= 0) {
       await updateUserLimit(user.id, newLimit)
     }
   }
@@ -118,6 +127,18 @@ function UserRow({ user }: {
         <span className="font-mono tabular-nums text-slate-700">{user.reportCount}</span>
       </td>
       <td className="px-5 py-4">
+        {limit < 0 ? (
+          <span className="font-mono text-sm text-green-700 font-semibold">∞</span>
+        ) : remaining > 0 ? (
+          <span className={`font-mono tabular-nums text-sm font-semibold ${remaining <= 2 ? 'text-red-600' : 'text-green-700'}`}>
+            {remaining}
+          </span>
+        ) : (
+          <span className="font-mono text-sm text-red-500 font-semibold">0</span>
+        )}
+        <div className="text-[10px] text-slate-400 font-mono">/ {limit < 0 ? 'sınırsız' : limit} rapor</div>
+      </td>
+      <td className="px-5 py-4">
         {user.paymentCount > 0 ? (
           <div>
             <span className="font-mono tabular-nums text-slate-700">{user.paymentCount} ödeme</span>
@@ -128,15 +149,18 @@ function UserRow({ user }: {
         )}
       </td>
       <td className="px-5 py-4">
-        <form action={handleUpdate} className="flex gap-2">
+        <form action={handleUpdate} className="flex gap-2 items-center">
           <Input
             name="limit"
             type="number"
-            defaultValue={sub?.monthly_limit_tokens ?? 5000}
-            className="w-28 h-9 text-sm font-mono"
-            min={1000}
-            step={1000}
+            defaultValue={adminOverrideValue(sub)}
+            placeholder={limit < 0 ? 'sınırsız' : String(limit)}
+            className="w-20 h-9 text-sm font-mono"
+            min={0}
+            max={100}
+            step={1}
           />
+          <span className="text-[10px] text-slate-400 font-mono">rapor/ay (0=plan)</span>
           <Button type="submit" size="sm" variant="outline">Güncelle</Button>
         </form>
       </td>

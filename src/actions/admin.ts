@@ -2,6 +2,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { PLAN_REPORT_LIMITS, type PlanTier } from '@/lib/stripe'
 import type { Database } from '@/lib/supabase/types'
 
 type UserRow = Database['public']['Tables']['users']['Row']
@@ -232,6 +233,16 @@ export async function getAllUsersDetailed() {
 
   const publicUserMap = new Map((publicUsers ?? []).map(u => [u.id, u]))
 
+  function calcReportLimit(sub: (SubRow & { extra_tokens: number }) | null | undefined): number {
+    if (!sub) return 0
+    const plan = (sub.plan === 'starter' || sub.plan === 'pro') ? (sub.plan as PlanTier) : 'free'
+    const planLimit = PLAN_REPORT_LIMITS[plan] ?? 0
+    const extra = sub.extra_tokens ?? 0
+    const adminOverride = sub.monthly_limit_tokens ?? 0
+    const baseLimit = (adminOverride > 0 && adminOverride <= 1000) ? adminOverride : planLimit
+    return baseLimit < 0 ? -1 : baseLimit + extra
+  }
+
   // Merge: start with auth users, enrich with public.users data
   const merged = new Map<string, {
     id: string
@@ -241,10 +252,10 @@ export async function getAllUsersDetailed() {
     created_at: string
     sub: SubRow & { extra_tokens: number } | null
     reportCount: number
+    reportLimit: number
     paymentCount: number
     paymentTotal: number
   }>()
-
   for (const au of authUsers) {
     const pu = publicUserMap.get(au.id)
     const pmt = paymentMap.get(au.id)
@@ -257,6 +268,7 @@ export async function getAllUsersDetailed() {
       created_at: pu?.created_at ?? au.created_at,
       sub: sub ?? null,
       reportCount: reportCountMap.get(au.id) ?? 0,
+      reportLimit: calcReportLimit(sub),
       paymentCount: pmt?.count ?? 0,
       paymentTotal: pmt?.total ?? 0,
     })
@@ -275,6 +287,7 @@ export async function getAllUsersDetailed() {
         created_at: pu.created_at,
         sub: sub ?? null,
         reportCount: reportCountMap.get(pu.id) ?? 0,
+        reportLimit: calcReportLimit(sub),
         paymentCount: pmt?.count ?? 0,
         paymentTotal: pmt?.total ?? 0,
       })

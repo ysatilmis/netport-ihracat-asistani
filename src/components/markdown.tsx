@@ -12,11 +12,10 @@ interface MarkdownProps {
  * tabloyu doğru parse eder.
  */
 function unwrapTablesInCodeFences(input: string): string {
-  // Normalize line endings first
   let text = input.replace(/\r\n/g, '\n')
-  // Unwrap tables trapped inside code fences (2+ pipe lines)
+  // Unwrap tables trapped inside code fences (1+ pipe-only lines)
   text = text.replace(
-    /```[a-zA-Z]*\s*\n((?:[ \t]*\|[^\n]+\n){2,})```/g,
+    /```[a-zA-Z]*\s*\n((?:[ \t]*\|[^\n]+\n)+)```/g,
     (_, table) => `\n${table}\n`,
   )
   // Fix tables missing GFM separator line: if a pipe-only line is followed
@@ -27,6 +26,16 @@ function unwrapTablesInCodeFences(input: string): string {
       const colCount = (header.match(/\|/g) || []).length - 1
       const sep = '|' + Array(colCount).fill(' --- ').join('|') + '|\n'
       return header + sep + data
+    },
+  )
+  // Fix single-line pipe tables (header only, no data) — add separator
+  text = text.replace(
+    /^(\|[^\n|]+\|[^\n]*\n)(?!\|[- :]+\|)(?!\|[^\n]+\|)/gm,
+    (match) => {
+      const colCount = (match.match(/\|/g) || []).length - 1
+      if (colCount < 1) return match
+      const sep = '|' + Array(colCount).fill(' --- ').join('|') + '|\n'
+      return match + sep
     },
   )
   return text

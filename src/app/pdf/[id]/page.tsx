@@ -12,7 +12,7 @@ interface Props {
 function unwrapTablesInCodeFences(input: string): string {
   let text = input.replace(/\r\n/g, '\n')
   text = text.replace(
-    /```[a-zA-Z]*\s*\n((?:[ \t]*\|[^\n]+\n){2,})```/g,
+    /```[a-zA-Z]*\s*\n((?:[ \t]*\|[^\n]+\n)+)```/g,
     (_, table) => `\n${table}\n`,
   )
   text = text.replace(
@@ -21,6 +21,15 @@ function unwrapTablesInCodeFences(input: string): string {
       const colCount = (header.match(/\|/g) || []).length - 1
       const sep = '|' + Array(colCount).fill(' --- ').join('|') + '|\n'
       return header + sep + data
+    },
+  )
+  text = text.replace(
+    /^(\|[^\n|]+\|[^\n]*\n)(?!\|[- :]+\|)(?!\|[^\n]+\|)/gm,
+    (match) => {
+      const colCount = (match.match(/\|/g) || []).length - 1
+      if (colCount < 1) return match
+      const sep = '|' + Array(colCount).fill(' --- ').join('|') + '|\n'
+      return match + sep
     },
   )
   return text
