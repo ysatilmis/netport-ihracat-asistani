@@ -158,7 +158,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               </h3>
               <div className="flex items-center gap-4">
                 <a
-                  href="https://www.linkedin.com/company/netportglobal/"
+                  href="https://www.linkedin.com/company/netport-digital-agency/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-slate-800 text-slate-300 hover:bg-blue-600 hover:text-white transition-all duration-200"
