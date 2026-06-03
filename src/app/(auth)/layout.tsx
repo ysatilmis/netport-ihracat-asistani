@@ -74,24 +74,70 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </aside>
 
       {/* Sağ Form Panel */}
-      <main className="flex items-center justify-center px-6 py-12 sm:px-10 bg-white">
-        {/* Mobile-only logo (hero gizli olduğunda) */}
-        <div className="lg:hidden absolute top-6 left-1/2 -translate-x-1/2 inline-flex items-center gap-2 bg-white rounded-xl shadow-md px-4 py-2">
-          <Image
-            src="/netport-logo.png"
-            alt="Netport"
-            width={400}
-            height={400}
-            unoptimized
-            priority
-            className="h-10 w-auto object-contain"
-          />
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-[var(--accent-strong)] text-white">
-            AI
-          </span>
-        </div>
-
+      <main className="flex items-start justify-center px-4 py-12 sm:px-10 bg-white lg:items-center overflow-hidden w-full min-w-0">
         <div className="w-full max-w-md">
+
+          {/* Mobile-only hero section */}
+          <div className="lg:hidden mb-8">
+            {/* Logo pill */}
+            <div className="flex justify-center mb-6">
+              <div className="inline-flex items-center gap-2 bg-white rounded-xl shadow-md border border-slate-100 px-4 py-2.5">
+                <Image
+                  src="/netport-logo.png"
+                  alt="Netport"
+                  width={400}
+                  height={400}
+                  unoptimized
+                  priority
+                  className="h-9 w-auto object-contain"
+                />
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-[var(--accent-strong)] text-white">
+                  AI
+                </span>
+              </div>
+            </div>
+
+            {/* Hero text */}
+            <div
+              className="rounded-2xl px-5 py-6 text-white mb-2"
+              style={{ backgroundColor: 'var(--primary)' }}
+            >
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/20 text-[10px] font-mono uppercase tracking-wider text-white/90 mb-4">
+                <span aria-hidden>⬢</span> İhracat Asistanı
+              </span>
+              <h1 className="text-xl font-bold tracking-tight text-white leading-snug mb-2">
+                Türk KOBİ&apos;lerinin AI ile ihracat öğrendiği yer.
+              </h1>
+              <p className="text-sm text-white/80 leading-relaxed mb-5">
+                Pazar analizi, alıcı listesi, soğuk e-posta — hepsi 11 bölümlük tek raporda.
+              </p>
+
+              <ul className="space-y-3">
+                <li className="flex gap-2.5 items-start">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/12 text-sm" aria-hidden>🌍</span>
+                  <div>
+                    <strong className="block text-xs font-semibold text-white mb-0.5">Hedef pazar seçimi</strong>
+                    <span className="text-xs text-white/70">En uygun 3 ülke + market size + rekabet.</span>
+                  </div>
+                </li>
+                <li className="flex gap-2.5 items-start">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/12 text-sm" aria-hidden>📋</span>
+                  <div>
+                    <strong className="block text-xs font-semibold text-white mb-0.5">Alıcı listesi + cold-email</strong>
+                    <span className="text-xs text-white/70">Doğrulanmış alıcı temas listesi ve müzakere şablonları.</span>
+                  </div>
+                </li>
+                <li className="flex gap-2.5 items-start">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/12 text-sm" aria-hidden>⚡</span>
+                  <div>
+                    <strong className="block text-xs font-semibold text-white mb-0.5">~6 dakikada rapor</strong>
+                    <span className="text-xs text-white/70">Manuel danışmandan 10× ucuz, 100× hızlı.</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
           {children}
         </div>
       </main>

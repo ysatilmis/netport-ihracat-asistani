@@ -21,7 +21,7 @@ export default function RegisterPage() {
           <span className="text-3xl">📧</span>
         </div>
         <p className="text-slate-600 text-sm sm:text-base mb-2 max-w-md mx-auto leading-relaxed">
-          <strong className="text-slate-900">{state.email}</strong> adresine bir onay maili gönderdik.
+          <strong className="text-slate-900 break-all">{state.email}</strong> adresine bir onay maili gönderdik.
         </p>
         <p className="text-slate-500 text-sm mb-8 max-w-md mx-auto leading-relaxed">
           Mail adresini onayladıktan sonra giriş yapabilirsin. Mail gelmediyse spam klasörünü kontrol et.
@@ -66,7 +66,7 @@ export default function RegisterPage() {
         Ücretsiz başla.
       </h2>
       <p className="text-slate-500 text-sm sm:text-base mb-8">
-        Free planla 2 rapor / ay. Kart bilgisi gerekmez.
+        Free planla 1 rapor / ay. Kart bilgisi gerekmez.
       </p>
 
       <form action={action} onSubmit={handleSubmit} className="space-y-5">
