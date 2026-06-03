@@ -1,4 +1,4 @@
-import { getAllUsersDetailed, updateUserLimit } from '@/actions/admin'
+import { getAllUsersDetailed, updateUserCredits } from '@/actions/admin'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -28,7 +28,7 @@ export default async function AdminUsersPage() {
                 <th className="px-5 py-3 text-left">Plan</th>
                 <th className="px-5 py-3 text-left">Ek Paket</th>
                 <th className="px-5 py-3 text-left">Rapor</th>
-                <th className="px-5 py-3 text-left">Kalan</th>
+                <th className="px-5 py-3 text-left">Kredi</th>
                 <th className="px-5 py-3 text-left">Ödeme</th>
                 <th className="px-5 py-3 text-left">Limit Güncelle</th>
               </tr>
@@ -70,6 +70,7 @@ function UserRow({ user }: {
     } | null
     reportCount: number
     reportLimit: number
+    credits: number
     paymentCount: number
     paymentTotal: number
   }
@@ -77,14 +78,12 @@ function UserRow({ user }: {
   const sub = user.sub
   const plan = sub?.plan ?? 'free'
   const extraPacks = sub?.extra_tokens ?? 0
-  const limit = user.reportLimit
-  const remaining = limit < 0 ? Infinity : Math.max(0, limit - user.reportCount)
 
-  async function handleUpdate(formData: FormData) {
+  async function handleSetCredits(formData: FormData) {
     'use server'
-    const newLimit = parseInt(formData.get('limit') as string)
-    if (!isNaN(newLimit) && newLimit >= 0) {
-      await updateUserLimit(user.id, newLimit)
+    const newCredits = parseInt(formData.get('credits') as string)
+    if (!isNaN(newCredits) && newCredits >= 0) {
+      await updateUserCredits(user.id, newCredits)
     }
   }
 
@@ -126,17 +125,11 @@ function UserRow({ user }: {
       <td className="px-5 py-4">
         <span className="font-mono tabular-nums text-slate-700">{user.reportCount}</span>
       </td>
-      <td className="px-5 py-4">
-        {limit < 0 ? (
-          <span className="font-mono text-sm text-green-700 font-semibold">∞</span>
-        ) : remaining > 0 ? (
-          <span className={`font-mono tabular-nums text-sm font-semibold ${remaining <= 2 ? 'text-red-600' : 'text-green-700'}`}>
-            {remaining}
-          </span>
-        ) : (
-          <span className="font-mono text-sm text-red-500 font-semibold">0</span>
-        )}
-        <div className="text-[10px] text-slate-400 font-mono">/ {limit < 0 ? 'sınırsız' : limit} rapor</div>
+            <td className="px-5 py-4">
+        <span className={`font-mono tabular-nums text-sm font-semibold ${user.credits === 0 ? 'text-red-500' : user.credits === 1 ? 'text-amber-600' : 'text-green-700'}`}>
+          {user.credits}
+        </span>
+        <div className="text-[10px] text-slate-400 font-mono">kredi</div>
       </td>
       <td className="px-5 py-4">
         {user.paymentCount > 0 ? (
@@ -148,20 +141,19 @@ function UserRow({ user }: {
           <span className="text-xs text-slate-400 font-mono">—</span>
         )}
       </td>
-      <td className="px-5 py-4">
-        <form action={handleUpdate} className="flex gap-2 items-center">
+            <td className="px-5 py-4">
+        <form action={handleSetCredits} className="flex gap-2 items-center">
           <Input
-            name="limit"
+            name="credits"
             type="number"
-            defaultValue={adminOverrideValue(sub)}
-            placeholder={limit < 0 ? 'sınırsız' : String(limit)}
+            defaultValue={user.credits}
             className="w-20 h-9 text-sm font-mono"
             min={0}
-            max={100}
+            max={1000}
             step={1}
           />
-          <span className="text-[10px] text-slate-400 font-mono">rapor/ay (0=plan)</span>
-          <Button type="submit" size="sm" variant="outline">Güncelle</Button>
+          <span className="text-[10px] text-slate-400 font-mono">kredi</span>
+          <Button type="submit" size="sm" variant="outline">Set</Button>
         </form>
       </td>
     </tr>
