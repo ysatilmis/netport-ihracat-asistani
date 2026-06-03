@@ -61,23 +61,28 @@ export async function POST(req: NextRequest) {
 
   const reportCount = pending.report_count ?? REPORT_PACK.reports
 
-  // Atomic increment via RPC or direct value set
-  // postgres function not deployed yet — read-then-write with service client (no RLS)
-  const { data: sub } = await supabase
-    .from('subscriptions')
-    .select('extra_tokens')
-    .eq('user_id', pending.user_id)
-    .single() as { data: { extra_tokens: number | null } | null; error: unknown }
-
-  const currentExtra = sub?.extra_tokens ?? 0
-  // Sanity check: negative values, NaN, absurdly high values
-  const safeCurrent = isNaN(currentExtra) || currentExtra < 0 ? 0 : currentExtra > 10000 ? 10000 : currentExtra
-  const newExtra = safeCurrent + reportCount
-
+  // Atomically increment credits using Postgres RPC
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase.from('subscriptions') as any)
-    .update({ extra_tokens: newExtra })
-    .eq('user_id', pending.user_id)
+  const { error: rpcError } = await (supabase.rpc as any)('increment_credits', {
+    p_user_id: pending.user_id,
+    p_amount: reportCount,
+  }) as { error: { message?: string } | null }
+
+  if (rpcError) {
+    console.error('[iyzico webhook] increment_credits failed:', rpcError)
+    // Fall back to read-then-write
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('credits')
+      .eq('user_id', pending.user_id)
+      .single() as { data: { credits: number | null } | null; error: unknown }
+
+    const safeCredits = Math.max(0, sub?.credits ?? 0)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from('subscriptions') as any)
+      .update({ credits: safeCredits + reportCount })
+      .eq('user_id', pending.user_id)
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('iyzico_pending_payments') as any)
@@ -91,8 +96,7 @@ export async function POST(req: NextRequest) {
   console.log('[iyzico webhook] payment success', {
     userId: pending.user_id,
     paymentId: payment.paymentId,
-    reportCount,
-    newExtra,
+    creditsAdded: reportCount,
   })
 
   return NextResponse.redirect(new URL('/dashboard?payment=success', req.url), { status: 303 })
