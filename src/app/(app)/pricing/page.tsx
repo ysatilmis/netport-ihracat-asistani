@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { REPORT_PACKS, PLAN_REPORT_LIMITS } from '@/lib/stripe'
-import { getMonthlyUsage } from '@/lib/token'
+import { REPORT_PACKS } from '@/lib/stripe'
+import { getCredits } from '@/lib/token'
 import { iyzicoConfigured } from '@/lib/iyzico'
 import { IyzicoCheckoutButton } from '@/components/iyzico-checkout-button'
 import { Check } from 'lucide-react'
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 }
 
 // Yüksel Hanım'ın WhatsApp numarası
-const WHATSAPP_NUMBER = '905321377158'
+const WHATSAPP_NUMBER = '905559891245'
 
 function buildWhatsAppUrl(userEmail?: string | null, packLabel?: string, packPrice?: number) {
   const emailPart = userEmail ? `,${userEmail} kullanıcı hesabım için` : ''
@@ -27,15 +27,11 @@ export default async function PricingPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  let used = 0
-  let limit = PLAN_REPORT_LIMITS.free
-  let remaining = limit
+  let credits = 0
   if (user) {
     try {
-      const usage = await getMonthlyUsage(user.id)
-      used = usage.used
-      limit = usage.limit
-      remaining = limit < 0 ? Number.POSITIVE_INFINITY : Math.max(0, limit - used)
+      const balance = await getCredits(user.id)
+      credits = balance.credits
     } catch {
       // subscription not found yet
     }
@@ -50,13 +46,13 @@ export default async function PricingPage() {
           <span>Fiyatlandırma</span>
         </div>
         <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-3 leading-[1.08]">
-          Aylık <span className="bg-gradient-to-r from-[var(--accent)] to-red-600 bg-clip-text text-transparent">2 rapor ücretsiz</span>.
+          Kayıtta <span className="bg-gradient-to-r from-[var(--accent)] to-red-600 bg-clip-text text-transparent">1 kredi ücretsiz</span>.
           <br className="hidden md:block" />
           Daha fazlası mı? Paket al.
         </h1>
         <p className="text-base text-slate-600 max-w-xl mx-auto leading-relaxed">
-          Karmaşık plan yok. Her ay 2 tam ihracat raporu hakkın var. Bittiyse ek paket satın al.
-          Mevcut periyodun sonuna kadar kullanılır.
+          Karmaşık plan yok. Kayıt olunca 1 rapor kredisi hediye. Bittiyse ek paket satın al.
+          Krediler süresiz geçerli — sıfırlanmaz.
         </p>
       </div>
 
@@ -65,38 +61,20 @@ export default async function PricingPage() {
         <div className="mb-10 rounded-2xl bg-white border border-slate-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6">
           <div className="flex items-baseline justify-between flex-wrap gap-3 mb-3">
             <h2 className="text-lg font-semibold text-slate-900">Mevcut Durumun</h2>
-            <span className="text-sm text-slate-500 font-mono">
-              {limit < 0 ? 'Sınırsız (Pro)' : `${used} / ${limit} rapor`}
-            </span>
+            <span className="text-sm text-slate-500 font-mono">{credits} kredi</span>
           </div>
-          {limit > 0 && (
-            <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden mb-3">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{
-                  width: `${Math.min(100, (used / limit) * 100)}%`,
-                  background:
-                    remaining === 0
-                      ? 'linear-gradient(90deg, #EF4444, #DC2626)'
-                      : remaining <= 1
-                        ? 'linear-gradient(90deg, #F59E0B, #D97706)'
-                        : 'linear-gradient(90deg, var(--accent), var(--primary))',
-                }}
-              />
-            </div>
-          )}
           <p className="text-sm text-slate-600">
-            {remaining === 0 ? (
+            {credits === 0 ? (
               <>
-                <span className="font-semibold text-red-600">Aylık hakkın bitti.</span> Aşağıdan ek paket alabilirsin.
+                <span className="font-semibold text-red-600">Krediyin bitti.</span> A�a��dan paket alabilirsin.
               </>
-            ) : remaining <= 1 ? (
+            ) : credits === 1 ? (
               <>
-                <span className="font-semibold text-amber-700">{remaining} rapor hakkın kaldı.</span> Yetmezse aşağıdan paket al.
+                <span className="font-semibold text-amber-700">1 kredin kald�.</span> Yetmezse a�a��dan paket al.
               </>
             ) : (
               <>
-                <span className="font-semibold text-emerald-700">{remaining === Number.POSITIVE_INFINITY ? 'Sınırsız' : remaining} rapor</span> hakkın var.
+                <span className="font-semibold text-emerald-700">{credits} kredi</span> kald�.
               </>
             )}
           </p>
@@ -170,9 +148,9 @@ export default async function PricingPage() {
               <ul className="space-y-3 mb-8">
                 {[
                   `${pack.reports} tam ihracat pazar raporu`,
-                  'Aylık hakkına ek olarak çalışır',
+                  'Mevcut kredinize eklenir',
                   'Tek seferlik — abonelik yok',
-                  'Mevcut periyod boyunca geçerli',
+                  'Süresi dolmaz',
                 ].map((feat) => (
                   <li key={feat} className="flex items-start gap-3 text-sm text-slate-700">
                     <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center">
@@ -217,10 +195,10 @@ export default async function PricingPage() {
 
               <p className="text-center text-xs text-slate-400 mt-4">
                 {!user
-                  ? 'Kayıt ücretsiz, 2 rapor hakkın hemen aktif'
+                  ? 'Kayıt ücretsiz, 1 kredin hemen aktif'
                   : iyzicoConfigured
                     ? 'Kartla güvenli ödeme — 3D Secure korumalı'
-                    : 'WhatsApp üzerinden Yüksel Hanım\'a ulaş, ödemeni yap, raporların hesabına tanımlansın'}
+                    : 'WhatsApp üzerinden Netport\'a ulaş, ödemeni yap, raporların hesabına tanımlansın'}
               </p>
             </div>
           </div>
@@ -234,11 +212,11 @@ export default async function PricingPage() {
           <div className="flex-1">
             <h4 className="text-sm font-semibold text-[var(--p1-fg)] mb-1">Nasıl çalışır?</h4>
             <p className="text-sm text-slate-700 leading-relaxed">
-              WhatsApp ile Yüksel Hanım'a ulaşırsın. Email adresin mesajda otomatik iletilir.
+              WhatsApp ile Netport'a ulaşırsın. Email adresin mesajda otomatik iletilir.
               Ödeme linki email'ine gelir, kredi kartınla ödersin. Ödeme onaylanınca rapor hakların
               hesabına eklenir. Soruların için:{' '}
               <a href={`https://wa.me/${WHATSAPP_NUMBER}`} className="font-medium text-[var(--primary)] hover:underline">
-                +90 532 137 71 58
+                +90 555 989 12 45
               </a>
             </p>
           </div>
