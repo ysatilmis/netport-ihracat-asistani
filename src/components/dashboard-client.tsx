@@ -11,9 +11,10 @@ import { getReportStreamer, getServerSnapshot } from '@/lib/report-streamer'
 
 interface DashboardClientProps {
   defaultProduct: string
+  isExhausted?: boolean
 }
 
-export function DashboardClient({ defaultProduct }: DashboardClientProps) {
+export function DashboardClient({ defaultProduct, isExhausted = false }: DashboardClientProps) {
   const streamer = getReportStreamer()
   const state = useSyncExternalStore(
     streamer.subscribe,
@@ -109,13 +110,34 @@ export function DashboardClient({ defaultProduct }: DashboardClientProps) {
         {step === 'form' && (
           <div
             className="h-fit mb-8 p-8 rounded-2xl bg-white border shadow-xl shadow-slate-200/40"
-            style={{ borderColor: 'var(--border)', borderTopWidth: '2px', borderTopColor: 'var(--accent)' }}
+            style={{ borderColor: 'var(--border)', borderTopWidth: '2px', borderTopColor: isExhausted ? '#EF4444' : 'var(--accent)' }}
           >
-            <ProductForm
-              defaultProduct={defaultProduct}
-              onSubmit={handleProductSubmit}
-              isLoading={isLoading}
-            />
+            {isExhausted ? (
+              <div className="flex flex-col gap-4 text-center py-2">
+                <div className="text-3xl" aria-hidden>🔒</div>
+                <div>
+                  <p className="font-semibold text-slate-900 text-base mb-1">
+                    Bu ayki rapor hakkın bitti.
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    Yeni rapor üretmek için ek paket satın alabilirsin.
+                  </p>
+                </div>
+                <a
+                  href="/pricing"
+                  className="inline-flex items-center justify-center gap-2 w-full px-5 py-3 rounded-xl text-white font-semibold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                  style={{ backgroundColor: 'var(--primary)' }}
+                >
+                  Rapor Paketi Satın Al →
+                </a>
+              </div>
+            ) : (
+              <ProductForm
+                defaultProduct={defaultProduct}
+                onSubmit={handleProductSubmit}
+                isLoading={isLoading}
+              />
+            )}
           </div>
         )}
       </div>
