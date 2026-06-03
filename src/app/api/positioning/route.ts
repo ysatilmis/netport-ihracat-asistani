@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { callLLMStream, type LLMModel } from '@/lib/llm'
-import { checkTokenLimit, recordTokenUsage } from '@/lib/token'
+import { checkCredits, recordTokenUsage } from '@/lib/token'
 import { positioningRequestSchema, zodErrorResponse } from '@/lib/validation/schemas'
 import { sanitizeError } from '@/lib/utils'
 import {
@@ -25,9 +25,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    await checkTokenLimit(user.id)
+    await checkCredits(user.id)
   } catch (e) {
-    if ((e as Error).message === 'TOKEN_LIMIT_EXCEEDED') {
+    const msg = (e as Error).message
+    if (msg === 'INSUFFICIENT_CREDITS') {
       return new Response(
         JSON.stringify({ error: 'TOKEN_LIMIT_EXCEEDED' }),
         { status: 429, headers: { 'Content-Type': 'application/json' } },
