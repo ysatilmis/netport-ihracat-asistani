@@ -73,6 +73,7 @@
   --popover-foreground: #1A1A2E;
   --primary: #0F2D5C;
   --primary-foreground: #FFFFFF;
+  --netport-green: #5CB83A; /* Netport logo yeşili */
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: #1A1A2E;
   --muted: #F1F0EE;

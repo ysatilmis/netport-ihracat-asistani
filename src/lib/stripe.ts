@@ -25,7 +25,7 @@ export const STRIPE_PRICES = {
 // Plan-bazlı aylık rapor kontenjanı — DB column açmıyoruz, kod tarafında hardcoded.
 // -1 = sınırsız (Pro tier — şu anda kapalı, gelecek faz)
 export const PLAN_REPORT_LIMITS: Record<PlanTier, number> = {
-  free: 2,
+  free: 1,
   starter: 10,
   pro: -1,
 }
@@ -75,10 +75,10 @@ export const PLANS = {
   free: {
     name: 'Ücretsiz',
     tokens: 80000, // legacy — artık kullanılmıyor; PLAN_REPORT_LIMITS bakılır
-    reports: 2,
+    reports: 1,
     price: 0,
     priceId: null,
-    features: ['2 tam rapor/ay', 'Temel ülke analizi', 'Sonuçları görüntüleme'],
+    features: ['1 tam rapor/ay', 'Temel ülke analizi', 'Sonuçları görüntüleme'],
   },
   starter: {
     name: 'Starter',

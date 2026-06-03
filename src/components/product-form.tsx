@@ -22,22 +22,22 @@ export function ProductForm({ defaultProduct = '', onSubmit, isLoading }: Produc
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div
-        className="rounded-xl p-4"
+        className="rounded-xl p-5"
         style={{
           backgroundColor: '#FFF7ED',
           borderLeft: '3px solid var(--accent)',
         }}
       >
-        <p className="text-base font-bold leading-snug" style={{ color: 'var(--foreground)' }}>
+        <p className="text-lg font-bold leading-relaxed" style={{ color: 'var(--foreground)' }}>
           <span style={{ color: 'var(--primary)' }}>[Ürün adı]</span> için en uygun 3 ihracat pazarını öner.
         </p>
-        <p className="mt-1 text-sm" style={{ color: 'var(--muted-foreground)' }}>
+        <p className="mt-2 text-base leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
           Pazar büyüklüğünü ve neden uygun olduğunu kısaca açıkla.
         </p>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="product" className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+      <div className="space-y-2.5">
+        <Label htmlFor="product" className="text-base font-medium" style={{ color: 'var(--foreground)' }}>
           İhraç etmek istediğiniz ürün
         </Label>
         <Input
@@ -48,17 +48,21 @@ export function ProductForm({ defaultProduct = '', onSubmit, isLoading }: Produc
           required
           disabled={isLoading}
           className="text-base rounded-xl bg-white border-2 border-slate-200 focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 transition-all"
-          style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+          style={{ borderColor: 'var(--border)', color: 'var(--foreground)', height: '3.5rem', minHeight: '3.5rem' }}
         />
-        <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
+        <p className="text-base leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
           AI, pazar büyüklüğü ve uygunluk gerekçesini birlikte sunarak en iyi 3 hedef pazarı önerir. Sen seçtiğinde o ülke için 10 bölümlük zincirleme analiz üretilir.
         </p>
       </div>
       <Button
         type="submit"
         disabled={isLoading || !product.trim()}
-        className="w-full text-white font-semibold py-3.5 text-base rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200"
-        style={{ backgroundColor: isLoading ? 'var(--muted-foreground)' : 'var(--primary)' }}
+        className="w-full text-white font-semibold text-lg rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200"
+        style={{
+          backgroundColor: isLoading ? 'var(--muted-foreground)' : 'var(--netport-green)',
+          height: '3.5rem',
+          minHeight: '3.5rem',
+        }}
       >
         {isLoading ? 'Rapor oluşturuluyor...' : '🚀 Tam İhracat Raporu Oluştur'}
       </Button>
