@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { callLLMStream, type LLMModel } from '@/lib/llm'
-import { checkTokenLimit, recordTokenUsage } from '@/lib/token'
+import { checkCredits, spendCredit, recordTokenUsage } from '@/lib/token'
 import { reportRequestSchema, zodErrorResponse } from '@/lib/validation/schemas'
 import { sanitizeError } from '@/lib/utils'
 import {
@@ -41,9 +41,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    await checkTokenLimit(user.id)
+    await checkCredits(user.id)
   } catch (e) {
-    if ((e as Error).message === 'TOKEN_LIMIT_EXCEEDED') {
+    const msg = (e as Error).message
+    if (msg === 'INSUFFICIENT_CREDITS') {
       return new Response(
         JSON.stringify({ error: 'TOKEN_LIMIT_EXCEEDED' }),
         { status: 429, headers: { 'Content-Type': 'application/json' } }
@@ -234,6 +235,13 @@ export async function POST(request: Request) {
           } else if (saved?.id) {
             console.log('[report] auto-save ok, id:', saved.id)
             send({ type: 'saved', id: saved.id })
+            // Spend 1 credit — after save so partial reports don't cost credit
+            try {
+              await spendCredit(user.id)
+            } catch (creditErr) {
+              console.error('[report] spendCredit failed:', creditErr)
+              // Non-fatal — report is saved, just log it
+            }
           }
         } catch (saveErr) {
           console.error('[report] auto-save exception:', saveErr)
