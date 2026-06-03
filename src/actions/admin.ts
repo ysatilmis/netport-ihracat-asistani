@@ -92,20 +92,31 @@ export async function updateUserCredits(userId: string, credits: number) {
   await requireAdmin()
   const supabase = await createServiceClient()
 
-  const { data: existing } = await supabase
-    .from('subscriptions')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: existing, error: lookupErr } = await (supabase.from('subscriptions') as any)
     .select('user_id')
-    .eq('user_id', userId)
-    .single() as { data: { user_id: string } | null; error: unknown }
+    .eq('user_id', userId) as { data: { user_id: string }[] | null; error: { message?: string } | null }
 
-  if (existing) {
-    await (supabase.from('subscriptions') as any)
+  if (lookupErr) {
+    console.error('[admin] updateUserCredits lookup failed:', lookupErr)
+    throw new Error('SUBSCRIPTION_LOOKUP_FAILED')
+  }
+
+  if (existing && existing.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: updateErr } = await (supabase.from('subscriptions') as any)
       .update({ credits })
-      .eq('user_id', userId)
+      .eq('user_id', userId) as { error: { message?: string } | null }
+
+    if (updateErr) {
+      console.error('[admin] updateUserCredits update failed:', updateErr)
+      throw new Error('SUBSCRIPTION_UPDATE_FAILED')
+    }
   } else {
     const now = new Date().toISOString().split('T')[0]
     const end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-    await (supabase.from('subscriptions') as any).insert({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: insertErr } = await (supabase.from('subscriptions') as any).insert({
       user_id: userId,
       plan: 'free',
       monthly_limit_tokens: 0,
@@ -113,7 +124,12 @@ export async function updateUserCredits(userId: string, credits: number) {
       current_period_end: end,
       extra_tokens: 0,
       credits,
-    })
+    }) as { error: { message?: string } | null }
+
+    if (insertErr) {
+      console.error('[admin] updateUserCredits insert failed:', insertErr)
+      throw new Error('SUBSCRIPTION_INSERT_FAILED')
+    }
   }
 
   revalidatePath('/admin/users')
