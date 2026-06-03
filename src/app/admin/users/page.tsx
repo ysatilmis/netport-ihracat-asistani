@@ -20,7 +20,8 @@ export default async function AdminUsersPage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
+        {/* Desktop tablo */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-500">
@@ -39,6 +40,10 @@ export default async function AdminUsersPage() {
               ))}
             </tbody>
           </table>
+        </div>
+        {/* Mobil kart listesi */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {users.map((u) => <UserCard key={u.id} user={u} />)}
         </div>
       </div>
     </div>
@@ -157,5 +162,51 @@ function UserRow({ user }: {
         </form>
       </td>
     </tr>
+  )
+}
+
+function UserCard({ user }: Parameters<typeof UserRow>[0]) {
+  const sub = user.sub
+  const plan = sub?.plan ?? 'free'
+  const extraPacks = sub?.extra_tokens ?? 0
+
+  async function handleSetCredits(formData: FormData) {
+    'use server'
+    const newCredits = parseInt(formData.get('credits') as string)
+    if (!isNaN(newCredits) && newCredits >= 0) {
+      const { updateUserCredits } = await import('@/actions/admin')
+      await updateUserCredits(user.id, newCredits)
+    }
+  }
+
+  return (
+    <div className="px-4 py-4 space-y-2">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <div className="font-semibold text-slate-900 text-sm">{user.full_name ?? user.email}</div>
+          <div className="text-xs text-slate-500 font-mono break-all">{user.email}</div>
+          <div className="text-[10px] text-slate-400 font-mono mt-0.5">{formatDate(user.created_at)}</div>
+        </div>
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono font-medium border shrink-0 ${
+          plan === 'pro' ? 'bg-[var(--p4-bg)] text-[var(--p4-fg)] border-[var(--p4-line)]' :
+          plan === 'starter' ? 'bg-[var(--p1-bg)] text-[var(--p1-fg)] border-[var(--p1-line)]' :
+          'bg-slate-50 text-slate-600 border-slate-200'
+        }`}>{plan}</span>
+      </div>
+      <div className="flex flex-wrap gap-3 text-xs font-mono text-slate-600">
+        <span>Rapor: <strong>{user.reportCount}</strong></span>
+        <span className={user.credits === 0 ? 'text-red-500 font-semibold' : user.credits === 1 ? 'text-amber-600 font-semibold' : 'text-green-700 font-semibold'}>
+          Kredi: {user.credits}
+        </span>
+        {extraPacks > 0 && <span className="text-green-700">+{extraPacks} ek paket</span>}
+        {user.paymentCount > 0 && <span>{user.paymentCount} ödeme · ₺{user.paymentTotal.toLocaleString('tr-TR')}</span>}
+      </div>
+      <form action={handleSetCredits} className="flex gap-2 items-center">
+        <Input name="credits" type="number" defaultValue={user.credits}
+          className="w-20 h-8 text-sm font-mono" min={0} max={1000} step={1} />
+        <span className="text-[10px] text-slate-400 font-mono">kredi</span>
+        <Button type="submit" size="sm" variant="outline">Set</Button>
+      </form>
+    </div>
   )
 }

@@ -111,7 +111,7 @@ export default async function PricingPage() {
               </div>
             )}
 
-            <div className="p-8 md:p-10">
+            <div className="p-5 sm:p-8 md:p-10">
               <div className="flex items-baseline justify-between flex-wrap gap-3 mb-2">
                 <h3 className="text-2xl font-bold text-slate-900 tracking-tight">{pack.label}</h3>
                 <span className="text-[11px] font-mono font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[var(--accent)]/10 text-[var(--accent-strong)] border border-[var(--accent)]/30">
@@ -122,10 +122,10 @@ export default async function PricingPage() {
               {/* Fiyat — strikethrough + indirim */}
               <div className="mb-6">
                 <div className="flex items-baseline gap-3 flex-wrap">
-                  <span className="text-5xl md:text-6xl font-bold text-slate-900 tracking-tight">
+                  <span className="text-3xl sm:text-5xl md:text-6xl font-bold text-slate-900 tracking-tight">
                     ₺{pack.priceTry.toLocaleString('tr-TR')}
                   </span>
-                  <span className="text-2xl text-slate-400 line-through decoration-2 decoration-red-400/60 font-medium">
+                  <span className="text-xl sm:text-2xl text-slate-400 line-through decoration-2 decoration-red-400/60 font-medium">
                     ₺{pack.originalPrice.toLocaleString('tr-TR')}
                   </span>
                 </div>

@@ -78,12 +78,12 @@ export default async function AdminDashboardPage() {
           <div className="space-y-2">
             {activity.recentPayments.length === 0 && <p className="text-sm text-slate-400">Henüz ödeme yok</p>}
             {activity.recentPayments.map(p => (
-              <div key={p.id} className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
+              <div key={p.id} className="flex flex-wrap items-start justify-between gap-2 py-1.5 border-b border-slate-100 last:border-0">
                 <div>
                   <div className="text-sm font-medium text-slate-900">{p.conversation_id?.slice(0, 12)}…</div>
                   <div className="text-xs text-slate-500 font-mono">{p.pack_id} · {p.report_count} rapor</div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className={`text-xs font-mono px-2 py-0.5 rounded-full border ${
                     p.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' :
                     p.status === 'failed' ? 'bg-red-50 text-red-700 border-red-200' :

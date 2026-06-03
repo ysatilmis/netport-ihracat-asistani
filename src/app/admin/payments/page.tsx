@@ -23,7 +23,8 @@ export default async function AdminPaymentsPage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
+        {/* Desktop tablo */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-500">
@@ -62,6 +63,31 @@ export default async function AdminPaymentsPage() {
               ))}
             </tbody>
           </table>
+        </div>
+        {/* Mobil kart listesi */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {payments.length === 0 && (
+            <p className="px-4 py-12 text-center text-slate-400 font-mono text-sm">Henüz ödeme yok.</p>
+          )}
+          {payments.map((p) => (
+            <div key={p.id} className="px-4 py-3 space-y-1.5">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <span className="font-semibold text-slate-900 font-mono">₺{Number(p.price_try).toLocaleString('tr-TR')}</span>
+                  <span className="text-xs text-slate-500 font-mono ml-2">{p.pack_id} · {p.report_count} rapor</span>
+                </div>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono font-medium border shrink-0 ${
+                  p.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' :
+                  p.status === 'failed' ? 'bg-red-50 text-red-700 border-red-200' :
+                  'bg-amber-50 text-amber-700 border-amber-200'
+                }`}>{p.status}</span>
+              </div>
+              <div className="text-xs text-slate-500 font-mono">{p.user_id.slice(0, 8)}… · {formatDate(p.created_at)}</div>
+              {(p.iyzico_payment_id ?? p.conversation_id) && (
+                <div className="text-[10px] text-slate-400 font-mono break-all">{p.iyzico_payment_id ?? p.conversation_id?.slice(0, 16) ?? '—'}</div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </div>

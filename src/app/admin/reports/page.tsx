@@ -32,7 +32,8 @@ export default async function AdminReportsPage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
+        {/* Desktop tablo */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-500">
@@ -58,6 +59,35 @@ export default async function AdminReportsPage() {
               ))}
             </tbody>
           </table>
+        </div>
+        {/* Mobil kart listesi */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {reports.length === 0 && (
+            <p className="px-4 py-12 text-center text-slate-400 font-mono text-sm">Henüz hiç rapor yok.</p>
+          )}
+          {reports.map((report, i) => {
+            const { product, country } = getProductCountry(report)
+            const date = new Date(report.created_at).toLocaleDateString('tr-TR')
+            return (
+              <div key={report.id} className="px-4 py-3 space-y-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="text-xs text-slate-400 font-mono">#{i + 1} · {report.users?.full_name ?? '?'}</div>
+                    <div className="text-xs text-slate-500 font-mono truncate max-w-[180px]">{report.users?.email ?? '?'}</div>
+                  </div>
+                  <span className="text-xs text-slate-400 font-mono whitespace-nowrap">{date}</span>
+                </div>
+                <div className="text-sm font-medium text-slate-800 truncate">{product} → {country}</div>
+                <div className="flex gap-2 pt-1">
+                  <a href={`/pdf/${report.id}`} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
+                    PDF
+                  </a>
+                  <DeleteReportButton reportId={report.id} />
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>

@@ -59,7 +59,7 @@ export function DashboardClient({ defaultProduct, isExhausted = false }: Dashboa
       {/* Hero + Form (yan yana lg+) — sadece form aşamasında grid, diğer aşamalarda hero tam genişlik */}
       <div className={step === 'form' ? "w-full grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start" : "w-full"}>
         {/* V3 Hero gradient banner */}
-        <div className="hero-gradient -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-6 md:py-8 mb-4 border-b border-slate-200/60">
+        <div className="hero-gradient -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-6 md:py-8 mb-4 border-b border-slate-200/60 overflow-hidden">
           <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-3 md:mb-4 leading-[1.08]">
             İhracat Pazar Analizi
           </h1>
