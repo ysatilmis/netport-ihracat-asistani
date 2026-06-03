@@ -1,10 +1,85 @@
 import { createClient } from '@/lib/supabase/server'
-import { PLAN_REPORT_LIMITS, type PlanTier } from '@/lib/stripe'
+
+export interface CreditBalance {
+  credits: number
+  plan: string
+}
+
+/**
+ * Returns current credit balance for the user.
+ * Throws if subscription row not found.
+ */
+export async function getCredits(userId: string): Promise<CreditBalance> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .select('credits, plan')
+    .eq('user_id', userId)
+    .single() as { data: { credits: number; plan: string } | null; error: unknown }
+
+  if (!data || error) throw new Error('SUBSCRIPTION_NOT_FOUND')
+
+  return { credits: data.credits, plan: data.plan }
+}
+
+/**
+ * Throws 'INSUFFICIENT_CREDITS' if user has no credits.
+ * Only enforced when ENFORCE_TOKEN_LIMITS=true.
+ */
+export async function checkCredits(userId: string): Promise<void> {
+  if (process.env.ENFORCE_TOKEN_LIMITS !== 'true') return
+
+  const { credits } = await getCredits(userId)
+  if (credits <= 0) {
+    throw new Error('INSUFFICIENT_CREDITS')
+  }
+}
+
+/**
+ * Atomically decrement user credits by 1 via Postgres RPC.
+ * Returns remaining credits after decrement.
+ * Throws 'INSUFFICIENT_CREDITS' if balance is 0.
+ */
+export async function spendCredit(userId: string): Promise<number> {
+  const supabase = await createClient()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)("decrement_credits", {
+    p_user_id: userId,
+  }) as { data: number | null; error: { message?: string } | null }
+
+  if (error) {
+    const msg = error.message ?? ''
+    if (msg.includes('INSUFFICIENT_CREDITS')) throw new Error('INSUFFICIENT_CREDITS')
+    if (msg.includes('SUBSCRIPTION_NOT_FOUND')) throw new Error('SUBSCRIPTION_NOT_FOUND')
+    throw new Error(msg || 'RPC_FAILED')
+  }
+
+  return data ?? 0
+}
+
+// ─── Legacy exports (kept for backward-compat, not used by new logic) ────────
+
+/** @deprecated Use getCredits instead */
+export async function getMonthlyUsage(userId: string) {
+  const { credits, plan } = await getCredits(userId)
+  return {
+    used: 0,
+    limit: credits,
+    periodStart: new Date().toISOString().split('T')[0],
+    periodEnd: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+    plan: (plan === 'starter' || plan === 'pro' ? plan : 'free') as 'free' | 'starter' | 'pro',
+  }
+}
+
+/** @deprecated Use checkCredits instead */
+export async function checkTokenLimit(userId: string): Promise<void> {
+  return checkCredits(userId)
+}
 
 export function isOverLimit(used: number, limit: number): boolean {
-  // -1 = unlimited (Pro tier)
-  if (limit < 0) return false
-  return used >= limit
+  return limit >= 0 && used >= limit
 }
 
 export function calculateRemainingReports(used: number, limit: number): number {
@@ -12,93 +87,7 @@ export function calculateRemainingReports(used: number, limit: number): number {
   return Math.max(0, limit - used)
 }
 
-/**
- * Mevcut billing periyodundaki rapor kullanımını hesaplar.
- *
- * (2026-05-19'da yeniden yazıldı: önce token sum'lardı, artık reports.is_full_report=true
- *  rows'unu count'lar. token_usage tablosu silinmedi — internal cost analytics için kalıyor.)
- *
- * Limit = PLAN_REPORT_LIMITS[plan] + extra_tokens (extra_reports semantik)
- * Used  = reports tablosunda current period içinde is_full_report=true row sayısı
- */
-export async function getMonthlyUsage(userId: string): Promise<{
-  used: number
-  limit: number
-  periodStart: string
-  periodEnd: string
-  plan: PlanTier
-}> {
-  const supabase = await createClient()
-
-  type SubRow = Pick<
-    import('@/lib/supabase/types').Database['public']['Tables']['subscriptions']['Row'],
-    'plan' | 'monthly_limit_tokens' | 'current_period_start' | 'current_period_end'
-  > & { extra_tokens?: number | null }
-
-  const { data: sub } = await supabase
-    .from('subscriptions')
-    .select('plan, monthly_limit_tokens, current_period_start, current_period_end, extra_tokens')
-    .eq('user_id', userId)
-    .single() as { data: SubRow | null; error: unknown }
-
-  if (!sub) throw new Error('Subscription not found')
-
-  const plan: PlanTier =
-    sub.plan === 'starter' || sub.plan === 'pro' ? (sub.plan as PlanTier) : 'free'
-
-  // reports tablosunda current period içinde is_full_report=true count.
-  // count: 'exact', head: true → row dönmez, sadece sayı.
-  const { count } = await supabase
-    .from('reports')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('is_full_report', true)
-    .gte('created_at', sub.current_period_start)
-    .lte('created_at', sub.current_period_end + 'T23:59:59.999Z')
-
-  const used = count ?? 0
-  const planLimit = PLAN_REPORT_LIMITS[plan] ?? 3
-  const extra = sub.extra_tokens ?? 0 // semantik: extra_reports
-
-  // Admin override: monthly_limit_tokens <= 1000 → report count override
-  // > 1000 → legacy token value (webhook), ignore. 0 → no override.
-  const adminOverride = sub.monthly_limit_tokens ?? 0
-  const baseLimit = (adminOverride > 0 && adminOverride <= 1000)
-    ? adminOverride
-    : planLimit
-
-  // Pro = sınırsız (planLimit = -1) — extra eklenmiş olsa bile sınırsız kalır
-  const limit = baseLimit < 0 ? -1 : baseLimit + extra
-
-  return {
-    used,
-    limit,
-    periodStart: sub.current_period_start,
-    periodEnd: sub.current_period_end,
-    plan,
-  }
-}
-
-/**
- * Yeni rapor üretimi öncesi kontenjan kontrolü.
- * ENFORCE_TOKEN_LIMITS env true ise: limit aşıldıysa TOKEN_LIMIT_EXCEEDED hatası atar.
- * (Hata adı backward-compat için TOKEN_LIMIT_EXCEEDED kalıyor — client error code'u
- *  burada okuyor; rename eylemi sonraki sprint için.)
- */
-export async function checkTokenLimit(userId: string): Promise<void> {
-  if (process.env.ENFORCE_TOKEN_LIMITS !== 'true') return
-
-  const { used, limit } = await getMonthlyUsage(userId)
-  if (isOverLimit(used, limit)) {
-    throw new Error('TOKEN_LIMIT_EXCEEDED')
-  }
-}
-
-/**
- * Per-LLM-çağrı token kaydı — cost analytics için.
- * Quota tüketimi artık BU function'a değil, reports tablosundaki is_full_report=true
- * row insertion'ına bağlı (auto-save flow at end of api/report/route.ts).
- */
+/** @deprecated Cost analytics only */
 export async function recordTokenUsage(
   userId: string,
   phase: 1 | 2 | 3 | 4,
