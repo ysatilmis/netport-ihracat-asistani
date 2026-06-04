@@ -54,6 +54,9 @@ export default function LoginPage() {
             <label htmlFor="password" className="block text-sm font-medium text-slate-700">
               Şifre
             </label>
+            <Link href="/forgot-password" className="text-xs text-[var(--primary)] hover:underline">
+              Şifremi unuttum
+            </Link>
           </div>
           <input
             id="password"
