@@ -106,13 +106,23 @@ export async function updatePassword(_prevState: unknown, formData: FormData) {
   if (!password || typeof password !== 'string' || password.length < 6) {
     return { error: 'Şifre en az 6 karakter olmalı.' }
   }
+  if (typeof confirm !== 'string') {
+    return { error: 'Şifreler eşleşmiyor.' }
+  }
   if (password !== confirm) {
     return { error: 'Şifreler eşleşmiyor.' }
   }
 
   const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: 'Oturum süresi dolmuş. Lütfen tekrar şifre sıfırlama isteği gönderin.' }
+  }
+
   const { error } = await supabase.auth.updateUser({ password })
   if (error) {
+    console.error('[auth] updateUser error:', error.message)
     return { error: 'Şifre güncellenemedi. Lütfen tekrar şifre sıfırlama isteği gönderin.' }
   }
 
