@@ -40,7 +40,14 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user && !path.startsWith('/login') && !path.startsWith('/register') && path !== '/admin/login') {
+  if (
+    !user &&
+    !path.startsWith('/login') &&
+    !path.startsWith('/register') &&
+    !path.startsWith('/forgot-password') &&
+    !path.startsWith('/reset-password') &&
+    path !== '/admin/login'
+  ) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
