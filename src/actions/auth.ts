@@ -79,3 +79,42 @@ export async function signOut() {
   await supabase.auth.signOut()
   redirect('/login')
 }
+
+export async function requestPasswordReset(_prevState: unknown, formData: FormData) {
+  const email = formData.get('email')
+  if (!email || typeof email !== 'string' || !EMAIL_RE.test(email)) {
+    return { error: 'Geçerli bir e-posta adresi girin.' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://netportai.com'}/auth/callback?type=recovery`,
+  })
+
+  // Always return success to prevent email enumeration
+  if (error) {
+    console.error('[auth] resetPasswordForEmail error:', error.message)
+  }
+
+  return { success: true }
+}
+
+export async function updatePassword(_prevState: unknown, formData: FormData) {
+  const password = formData.get('password')
+  const confirm = formData.get('confirm_password')
+
+  if (!password || typeof password !== 'string' || password.length < 6) {
+    return { error: 'Şifre en az 6 karakter olmalı.' }
+  }
+  if (password !== confirm) {
+    return { error: 'Şifreler eşleşmiyor.' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.updateUser({ password })
+  if (error) {
+    return { error: 'Şifre güncellenemedi. Lütfen tekrar şifre sıfırlama isteği gönderin.' }
+  }
+
+  redirect('/dashboard')
+}
