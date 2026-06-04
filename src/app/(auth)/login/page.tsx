@@ -1,14 +1,33 @@
 'use client'
 import { signIn } from '@/actions/auth'
 import Link from 'next/link'
-import { useActionState } from 'react'
+import { useActionState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-export default function LoginPage() {
-  const [state, action, pending] = useActionState(signIn, undefined)
+function LoginAlerts() {
   const searchParams = useSearchParams()
   const confirmed = searchParams.get('confirmed') === '1'
   const callbackError = searchParams.get('error') === 'auth_callback_error'
+
+  if (confirmed) {
+    return (
+      <div className="mb-6 rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-sm text-emerald-800 font-medium">
+        E-posta adresin onaylandı. Artık giriş yapabilirsin.
+      </div>
+    )
+  }
+  if (callbackError) {
+    return (
+      <div className="mb-6 rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-red-700">
+        Onay bağlantısı geçersiz veya süresi dolmuş. Lütfen tekrar kayıt olmayı dene.
+      </div>
+    )
+  }
+  return null
+}
+
+export default function LoginPage() {
+  const [state, action, pending] = useActionState(signIn, undefined)
 
   return (
     <div className="w-full">
@@ -22,17 +41,9 @@ export default function LoginPage() {
         İhracat raporlarına devam et veya yeni biri başlat.
       </p>
 
-      {confirmed && (
-        <div className="mb-6 rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-sm text-emerald-800 font-medium">
-          E-posta adresin onaylandı. Artık giriş yapabilirsin.
-        </div>
-      )}
-
-      {callbackError && (
-        <div className="mb-6 rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-red-700">
-          Onay bağlantısı geçersiz veya süresi dolmuş. Lütfen tekrar kayıt olmayı dene.
-        </div>
-      )}
+      <Suspense fallback={null}>
+        <LoginAlerts />
+      </Suspense>
 
       <form action={action} className="space-y-5">
         <div className="space-y-1.5">
