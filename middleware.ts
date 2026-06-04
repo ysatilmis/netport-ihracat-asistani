@@ -7,6 +7,7 @@ function isPublicAsset(path: string) {
   return (
     path.startsWith('/_next/') ||
     path.startsWith('/api/') ||
+    path.startsWith('/auth/') ||
     path === '/favicon.ico' ||
     STATIC_EXT.test(path)
   )
