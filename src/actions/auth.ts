@@ -88,7 +88,7 @@ export async function requestPasswordReset(_prevState: unknown, formData: FormDa
 
   const supabase = await createClient()
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://netportai.com'}/auth/callback?type=recovery`,
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://netportai.com'}/auth/callback?next=/reset-password`,
   })
 
   // Always return success to prevent email enumeration

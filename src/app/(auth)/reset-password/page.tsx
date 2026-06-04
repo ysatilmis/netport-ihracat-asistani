@@ -1,6 +1,7 @@
 'use client'
 import { updatePassword } from '@/actions/auth'
 import { useActionState } from 'react'
+import Link from 'next/link'
 
 export default function ResetPasswordPage() {
   const [state, action, pending] = useActionState(updatePassword, undefined)
@@ -51,6 +52,15 @@ export default function ResetPasswordPage() {
         {state?.error && (
           <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
             {state.error}
+          </p>
+        )}
+
+        {state?.error && (
+          <p className="text-center text-xs text-slate-400">
+            Link süresi dolmuş olabilir.{' '}
+            <Link href="/forgot-password" className="text-[var(--primary)] hover:underline">
+              Yeni link gönder
+            </Link>
           </p>
         )}
 
