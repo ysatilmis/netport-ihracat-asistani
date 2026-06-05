@@ -24,7 +24,7 @@ export async function TokenMeter({ userId }: TokenMeterProps) {
     return (
       <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border bg-gradient-to-br from-slate-100 to-slate-50 border-slate-200">
         <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-400" aria-hidden />
-        <span className="text-[11px] text-slate-500 font-mono">Yükleniyor...</span>
+        <span className="text-[11px] text-slate-500 font-mono">0 kredi · Free</span>
       </div>
     )
   }

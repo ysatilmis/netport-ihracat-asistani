@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 export interface CreditBalance {
   credits: number
@@ -16,9 +16,28 @@ export async function getCredits(userId: string): Promise<CreditBalance> {
     .from('subscriptions')
     .select('credits, plan')
     .eq('user_id', userId)
-    .single() as { data: { credits: number; plan: string } | null; error: unknown }
+    .maybeSingle()
 
-  if (!data || error) throw new Error('SUBSCRIPTION_NOT_FOUND')
+  if (error) throw new Error('SUBSCRIPTION_NOT_FOUND')
+
+  // No subscription row yet (new user, DB trigger not fired) — bootstrap via service role
+  if (!data) {
+    const serviceSupabase = await createServiceClient()
+    const now = new Date().toISOString().split('T')[0]
+    const end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    await serviceSupabase.from('subscriptions').insert({
+      user_id: userId,
+      plan: 'free',
+      monthly_limit_tokens: 0,
+      current_period_start: now,
+      current_period_end: end,
+      extra_tokens: 0,
+      credits: 1,
+      stripe_customer_id: null,
+      stripe_subscription_id: null,
+    })
+    return { credits: 1, plan: 'free' }
+  }
 
   return { credits: data.credits, plan: data.plan }
 }
