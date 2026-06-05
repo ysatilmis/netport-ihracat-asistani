@@ -1,5 +1,7 @@
 'use client'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import type { CountryOption } from '@/lib/report-prompts'
 
 interface CountryChooserProps {
@@ -16,6 +18,16 @@ const RANK_META = [
 ] as const
 
 export function CountryChooser({ countries, product, onPick, disabled }: CountryChooserProps) {
+  const [showCustom, setShowCustom] = useState(false)
+  const [customCountry, setCustomCountry] = useState('')
+
+  const handleCustomSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const trimmed = customCountry.trim()
+    if (!trimmed) return
+    onPick(trimmed)
+  }
+
   return (
     <section className="my-8">
       <header className="mb-5">
@@ -125,6 +137,55 @@ export function CountryChooser({ countries, product, onPick, disabled }: Country
             </article>
           )
         })}
+      </div>
+
+      {/* 4. ülke seçeneği */}
+      <div className="mt-6">
+        <hr className="border-slate-200 mb-5" />
+        {!showCustom ? (
+          <button
+            type="button"
+            onClick={() => setShowCustom(true)}
+            disabled={disabled}
+            className="text-sm text-slate-500 hover:text-slate-700 underline underline-offset-2 transition-colors disabled:opacity-40"
+          >
+            Başka bir ülke için analiz yap →
+          </button>
+        ) : (
+          <div className="rounded-xl border border-slate-200 bg-white p-5">
+            <p className="text-sm font-medium text-slate-700 mb-1">Kendiniz bir ülke belirleyin</p>
+            <p className="text-xs text-amber-600 mb-3">
+              ⚠ AI bu ülkeyi önermediydi — rapor seçtiğiniz ülke için üretilecek.
+            </p>
+            <form onSubmit={handleCustomSubmit} className="flex gap-2 items-start">
+              <Input
+                value={customCountry}
+                onChange={(e) => setCustomCountry(e.target.value)}
+                placeholder="örn: Güney Kore, Japonya, Brezilya"
+                disabled={disabled}
+                autoFocus
+                className="flex-1 rounded-xl border-2 border-slate-200 focus:border-[var(--accent)] text-sm"
+              />
+              <Button
+                type="submit"
+                disabled={disabled || !customCountry.trim()}
+                className="text-white text-sm font-medium rounded-xl shrink-0"
+                style={{ backgroundColor: 'var(--primary)' }}
+              >
+                Analiz et
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => { setShowCustom(false); setCustomCountry('') }}
+                disabled={disabled}
+                className="text-slate-500 text-sm rounded-xl shrink-0"
+              >
+                İptal
+              </Button>
+            </form>
+          </div>
+        )}
       </div>
     </section>
   )

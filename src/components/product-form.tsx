@@ -10,13 +10,39 @@ interface ProductFormProps {
   isLoading: boolean
 }
 
+function needsConfirmation(product: string): boolean {
+  const trimmed = product.trim()
+  if (trimmed.length < 4) return true
+  if (/^\d+$/.test(trimmed)) return true
+  // Single word without space and short → might be incomplete
+  if (trimmed.length <= 15 && !trimmed.includes(' ')) return true
+  return false
+}
+
 export function ProductForm({ defaultProduct = '', onSubmit, isLoading }: ProductFormProps) {
   const [product, setProduct] = useState(defaultProduct)
+  const [pendingConfirm, setPendingConfirm] = useState<string | null>(null)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!product.trim()) return
-    onSubmit(product.trim())
+    const trimmed = product.trim()
+    if (!trimmed) return
+    if (needsConfirmation(trimmed)) {
+      setPendingConfirm(trimmed)
+    } else {
+      onSubmit(trimmed)
+    }
+  }
+
+  const handleConfirm = () => {
+    if (pendingConfirm) {
+      onSubmit(pendingConfirm)
+      setPendingConfirm(null)
+    }
+  }
+
+  const handleEdit = () => {
+    setPendingConfirm(null)
   }
 
   return (
@@ -66,6 +92,37 @@ export function ProductForm({ defaultProduct = '', onSubmit, isLoading }: Produc
       >
         {isLoading ? 'Rapor oluşturuluyor...' : '🚀 Tam İhracat Raporu Oluştur'}
       </Button>
+
+      {/* Onay dialogu */}
+      {pendingConfirm && (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm font-semibold text-amber-900 mb-1">
+            📦 &quot;{pendingConfirm}&quot; ürününü araştırmak istediğinizden emin misiniz?
+          </p>
+          <p className="text-xs text-amber-700 mb-3">
+            Daha spesifik ürün adı daha iyi sonuç verir.<br />
+            Örn: &quot;zeytinyağı&quot; yerine &quot;sızma organik zeytinyağı 500ml&quot;
+          </p>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              onClick={handleConfirm}
+              className="flex-1 text-sm font-semibold text-white rounded-xl"
+              style={{ backgroundColor: 'var(--netport-green)' }}
+            >
+              ✓ Evet, devam et
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleEdit}
+              className="flex-1 text-sm rounded-xl border-amber-300 text-amber-800 hover:bg-amber-100"
+            >
+              ✗ Düzelt
+            </Button>
+          </div>
+        </div>
+      )}
     </form>
   )
 }

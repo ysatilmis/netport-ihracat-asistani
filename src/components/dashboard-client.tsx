@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useSyncExternalStore } from 'react'
+import { useEffect, useSyncExternalStore, useState } from 'react'
 import { ProductForm } from './product-form'
 import { ReportProgress } from './report-progress'
 import { ReportView } from './report-view'
@@ -14,7 +14,34 @@ interface DashboardClientProps {
   isExhausted?: boolean
 }
 
+const EU_COUNTRIES = new Set([
+  'almanya', 'germany', 'fransa', 'france', 'hollanda', 'netherlands', 'italya', 'italy',
+  'ispanya', 'spain', 'belçika', 'belgium', 'avusturya', 'austria', 'isveç', 'sweden',
+  'danimarka', 'denmark', 'finlandiya', 'finland', 'polonya', 'poland', 'portekiz', 'portugal',
+  'yunanistan', 'greece', 'çek cumhuriyeti', 'czech republic', 'macaristan', 'hungary',
+  'romanya', 'romania', 'bulgaristan', 'bulgaria', 'hırvatistan', 'croatia', 'slovakya',
+  'slovakia', 'slovenya', 'slovenia', 'litvanya', 'lithuania', 'letonya', 'latvia',
+  'estonya', 'estonia', 'kıbrıs', 'cyprus', 'malta', 'lüksemburg', 'luxembourg', 'irlanda', 'ireland',
+])
+
+const AGRI_KEYWORDS = [
+  'zeytinyağı', 'zeytin', 'incir', 'fındık', 'ceviz', 'fıstık', 'kayısı', 'kuru', 'organik',
+  'tahıl', 'bakliyat', 'mercimek', 'nohut', 'fasulye', 'meyve', 'sebze', 'et', 'süt',
+  'peynir', 'bal', 'tarım', 'gıda', 'yağ', 'un', 'buğday', 'arpa', 'şarap', 'üzüm',
+  'domates', 'biber', 'patlıcan', 'elma', 'kiraz', 'çilek', 'frenk üzümü', 'kavun', 'karpuz',
+]
+
+function isEuCountry(country: string): boolean {
+  return EU_COUNTRIES.has(country.toLowerCase().trim())
+}
+
+function isAgriculturalProduct(product: string): boolean {
+  const lower = product.toLowerCase()
+  return AGRI_KEYWORDS.some((kw) => lower.includes(kw))
+}
+
 export function DashboardClient({ defaultProduct, isExhausted = false }: DashboardClientProps) {
+  const [euWarningDismissed, setEuWarningDismissed] = useState(false)
   const streamer = getReportStreamer()
   const state = useSyncExternalStore(
     streamer.subscribe,
@@ -49,6 +76,7 @@ export function DashboardClient({ defaultProduct, isExhausted = false }: Dashboa
   }
 
   const handleCountryPick = (country: string) => {
+    setEuWarningDismissed(false)
     void streamer.startDeepDive(country)
   }
 
@@ -210,6 +238,40 @@ export function DashboardClient({ defaultProduct, isExhausted = false }: Dashboa
           disabled={isLoading}
         />
       )}
+
+      {/* AB Gümrük Uyarısı — tarım ürünü + AB ülkesi kombinasyonunda */}
+      {(step === 'deep_dive' || step === 'done') &&
+        !euWarningDismissed &&
+        selectedCountry &&
+        isEuCountry(selectedCountry) &&
+        isAgriculturalProduct(reportProduct) && (
+          <div className="w-full max-w-2xl mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-2">
+                <span className="text-lg shrink-0" aria-hidden>⚠️</span>
+                <div>
+                  <p className="text-sm font-semibold text-amber-900 mb-1">
+                    AB Gümrük Uyarısı: {selectedCountry} bir AB üyesidir
+                  </p>
+                  <p className="text-xs text-amber-800 leading-relaxed">
+                    Türkiye-AB Gümrük Birliği sanayi ürünlerini kapsar, ancak tarım ve gıda
+                    ürünleri için AB&apos;nin Ortak Tarım Politikası (OTP) kapsamında ek gümrük
+                    vergisi ve kota uygulanabilir. Gerçek tarife oranını{' '}
+                    <strong>Yasal &amp; Gümrük Çerçevesi</strong> bölümünde kontrol edin. Amerika
+                    veya Güney Kore gibi AB dışı pazarlar bu ürün için daha uygun olabilir.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEuWarningDismissed(true)}
+                className="text-amber-600 hover:text-amber-800 shrink-0 text-lg leading-none"
+                aria-label="Uyarıyı kapat"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
 
       {/* Aşama 2 (deep dive) progress */}
       {(step === 'deep_dive' || step === 'done') && (

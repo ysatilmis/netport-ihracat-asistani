@@ -82,6 +82,11 @@ export function extractSelectedCountry(text: string): string | undefined {
 // Her bölüm önceki ilgili bölümleri referans alır.
 // ─────────────────────────────────────────────────────────────────────────
 
+// Tüm section prompt'larına inject edilen somutlaştırma kuralları
+const SOMUTLASTIRMA = `
+> 🎯 SOMUTLASTIRMA KURALI: Belirsiz tahminler, geniş aralıklar ve kaynak belirsiz rakamlar YASAK. Her veri için: değer + kaynak + yıl. Kaynak yoksa o satırı tamamen atla — boş tablo hücresi bile "tahmini" ifadeden iyidir. Bu rapor gerçek bir alıcıya sunulacak; her cümle işe yaramalı. "Yaklaşık", "genellikle", "çoğunlukla" gibi belirsiz zarflar yasak.
+`.trim()
+
 export const REPORT_SECTIONS: ReportSection[] = [
   // ═══ FAZ 1: ARAŞTIRMA & HAZIRLIK ═══════════════════════════════════════
 
@@ -102,6 +107,8 @@ Geri kalan detay içerik:
 [Mevcut zorunlu alanlar, tablolar, listeler]
 
 > ⚡ DİSİPLİN: Her madde en fazla 2 cümle. Tekrar yasak. Dolgu cümle yasak. Tablolar 5 satırı geçmesin. Önceki bölümde geçen bilgiyi yeniden anlatma — kısa referans ver.
+
+${SOMUTLASTIRMA}
 
 Sen Türkiye'den ihracat yapan KOBİ'lere danışmanlık veren kıdemli bir pazar analistisin. Kaynak göstermeden iddia üretmezsin.
 
@@ -165,6 +172,8 @@ Geri kalan detay içerik:
 [Mevcut zorunlu alanlar, tablolar, listeler]
 
 > ⚡ DİSİPLİN: Her madde en fazla 2 cümle. Tekrar yasak. Dolgu cümle yasak. Tablolar 5 satırı geçmesin. Önceki bölümde geçen bilgiyi yeniden anlatma — kısa referans ver.
+
+${SOMUTLASTIRMA}
 
 Sen pazar araştırma şirketlerinin (Statista, Grand View Research, Mordor Intelligence) raporlarını tarayan bir araştırma analistisin.
 
@@ -234,6 +243,8 @@ Geri kalan detay içerik:
 
 > ⚡ DİSİPLİN: Her madde en fazla 2 cümle. Tekrar yasak. Dolgu cümle yasak. Tablolar 5 satırı geçmesin. Önceki bölümde geçen bilgiyi yeniden anlatma — kısa referans ver.
 
+${SOMUTLASTIRMA}
+
 Sen B2B ve B2C alıcı davranışını analiz eden bir tüketici içgörü uzmanısın.
 
 ${buildContextBlock(ctx, ['target_countries', 'market_size_growth'])}
@@ -294,7 +305,11 @@ Geri kalan detay içerik:
 
 > ⚡ DİSİPLİN: Her madde en fazla 2 cümle. Tekrar yasak. Dolgu cümle yasak. Tablolar 5 satırı geçmesin. Önceki bölümde geçen bilgiyi yeniden anlatma — kısa referans ver.
 
+${SOMUTLASTIRMA}
+
 Sen ihracat operasyonu danışmanısın. Türkiye Ticaret Bakanlığı mevzuatı, AB TARIC ve hedef ülke gümrük kodlarında uzmansın. Belirsizliklerde "doğrulama önerisi" verirsin.
+
+VERGİ UYARISI (KRİTİK): Gümrük tarifesi MUTLAKA kesin oran olarak yazılmalı — "yaklaşık" veya geniş aralık KABUL EDİLMEZ. AB üyesi ülkeler için: Türkiye-AB Gümrük Birliği kapsamında sanayi ürünleri genellikle 0 tarife alır, ANCAK tarım ve gıda ürünleri (zeytinyağı, kuru meyve, bakliyat, et, süt, fındık, bal vb.) AB'nin Ortak Tarım Politikası (OTP/CAP) kapsamında ayrı muamele görür ve ek gümrük vergisi + tarife kotası uygulanabilir. Bu ayrımı ürün için açıkça belirt: "Bu ürün sanayi mi, tarım mı?" sorusunu ilk maddede yanıtla.
 
 ${buildContextBlock(ctx, ['target_countries'])}
 
@@ -362,6 +377,8 @@ Geri kalan detay içerik:
 
 > ⚡ DİSİPLİN: Her madde en fazla 2 cümle. Tekrar yasak. Dolgu cümle yasak. Tablolar 5 satırı geçmesin. Önceki bölümde geçen bilgiyi yeniden anlatma — kısa referans ver.
 
+${SOMUTLASTIRMA}
+
 Sen B2B konumlandırma ve marka stratejisi uzmanısın. April Dunford, Al Ries, Geoffrey Moore okulundan beslenirsin.
 
 ${buildContextBlock(ctx, ['target_countries', 'market_size_growth', 'consumer_profile', 'legal_customs'])}
@@ -425,7 +442,11 @@ Geri kalan detay içerik:
 
 > ⚡ DİSİPLİN: Her madde en fazla 2 cümle. Tekrar yasak. Dolgu cümle yasak. Tablolar 5 satırı geçmesin. Önceki bölümde geçen bilgiyi yeniden anlatma — kısa referans ver.
 
+${SOMUTLASTIRMA}
+
 Sen ihracat fiyatlandırma uzmanısın. FOB / CIF / DDP zincirini sayısal modelleyebilirsin.
+
+FİYAT TABLOSU KURALI: "Brand A, Brand B" gibi yer tutucu marka adları YASAK — gerçek marka isimlerini, gözlem dönemini ve kaynağı yaz. Gerçek marka bilgisi yoksa o satırı tabloya ekleme; boş tablo doldurma amaçlı uydurma isim koymaktan iyidir.
 
 ${buildContextBlock(ctx, ['market_size_growth', 'consumer_profile', 'legal_customs', 'usp_positioning'])}
 
@@ -494,6 +515,8 @@ Geri kalan detay içerik:
 
 > ⚡ DİSİPLİN: Her madde en fazla 2 cümle. Tekrar yasak. Dolgu cümle yasak. Tablolar 5 satırı geçmesin. Önceki bölümde geçen bilgiyi yeniden anlatma — kısa referans ver.
 
+${SOMUTLASTIRMA}
+
 Sen B2B ihracat pazarlama copywriter'ısın. Generic çeviri değil — native ses üretirsin.
 
 ${buildContextBlock(ctx, ['consumer_profile', 'usp_positioning'])}
@@ -560,7 +583,11 @@ Geri kalan detay içerik:
 
 > ⚡ DİSİPLİN: Her madde en fazla 2 cümle. Tekrar yasak. Dolgu cümle yasak. Tablolar 5 satırı geçmesin. Önceki bölümde geçen bilgiyi yeniden anlatma — kısa referans ver.
 
+${SOMUTLASTIRMA}
+
 Sen ihracat lead generation uzmanısın. LinkedIn Sales Navigator, ticaret odası rehberleri ve sektör dernek dizinlerini tarayan bir araştırmacı gibi çalışırsın.
+
+ALICI LİSTESİ KURALI: Her şirket için — şirket adı + web sitesi + satın alma/procurement unvanı (varsa) + yıllık tahmini ithalat büyüklüğü (kaynak + yıl). "Giderek artmaktadır", "büyümektedir" gibi kaynak belirsiz büyüme ifadesi YASAK. Bilgi doğrulanamıyorsa o sütunu boş bırak, uydurma.
 
 ${buildContextBlock(ctx, ['consumer_profile', 'usp_positioning', 'price_strategy'])}
 
@@ -619,6 +646,8 @@ Geri kalan detay içerik:
 [Mevcut zorunlu alanlar, tablolar, listeler]
 
 > ⚡ DİSİPLİN: Her madde en fazla 2 cümle. Tekrar yasak. Dolgu cümle yasak. Tablolar 5 satırı geçmesin. Önceki bölümde geçen bilgiyi yeniden anlatma — kısa referans ver.
+
+${SOMUTLASTIRMA}
 
 Sen B2B soğuk e-posta uzmanısın. Spam değil, ilgi çekici ve saygılı yazarsın.
 
@@ -681,6 +710,8 @@ Geri kalan detay içerik:
 [Mevcut zorunlu alanlar, tablolar, listeler]
 
 > ⚡ DİSİPLİN: Her madde en fazla 2 cümle. Tekrar yasak. Dolgu cümle yasak. Tablolar 5 satırı geçmesin. Önceki bölümde geçen bilgiyi yeniden anlatma — kısa referans ver.
+
+${SOMUTLASTIRMA}
 
 Sen B2B ihracat müzakere koçusun. Erin Meyer "Culture Map" çerçevesine hakimsin.
 
@@ -759,6 +790,8 @@ Geri kalan detay içerik:
 [Mevcut zorunlu alanlar, tablolar, listeler]
 
 > ⚡ DİSİPLİN: Her madde en fazla 2 cümle. Tekrar yasak. Dolgu cümle yasak. Tablolar 5 satırı geçmesin. Önceki bölümde geçen bilgiyi yeniden anlatma — kısa referans ver.
+
+${SOMUTLASTIRMA}
 
 Sen ihracat danışmanlığı raporlarının yönetici özetini yazan kıdemli bir analistsin. Karar verici 1 sayfada okuyup harekete geçebilmeli.
 
