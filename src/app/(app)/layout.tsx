@@ -49,9 +49,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="hidden sm:block">
-              <TokenMeter userId={user.id} />
-            </div>
+            <TokenMeter userId={user.id} />
             <form action={signOut}>
               <button
                 type="submit"
