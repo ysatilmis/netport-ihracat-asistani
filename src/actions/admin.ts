@@ -7,7 +7,8 @@ import type { Database } from '@/lib/supabase/types'
 
 type UserRow = Database['public']['Tables']['users']['Row']
 type SubRow = Database['public']['Tables']['subscriptions']['Row']
-type UsageRow = Database['public']['Tables']['token_usage']['Row']
+type ReportRow = Database['public']['Tables']['reports']['Row']
+type PaymentRow = Database['public']['Tables']['iyzico_pending_payments']['Row']
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -19,8 +20,11 @@ async function requireAdmin() {
     return user
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data } = await (supabase.from('users') as any).select('role').eq('id', user.id).single() as { data: Pick<UserRow, 'role'> | null }
+  const { data } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single()
   if (data?.role !== 'admin') throw new Error('Not admin')
   return user
 }
@@ -29,18 +33,18 @@ export async function getAllUsersWithUsage() {
   await requireAdmin()
   const supabase = await createServiceClient()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: users } = await (supabase.from('users') as any)
+  const { data: users } = await supabase
+    .from('users')
     .select('id, email, full_name, role, created_at')
-    .order('created_at', { ascending: false }) as { data: Pick<UserRow, 'id' | 'email' | 'full_name' | 'role' | 'created_at'>[] | null }
+    .order('created_at', { ascending: false })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: subs } = await (supabase.from('subscriptions') as any)
-    .select('user_id, plan, monthly_limit_tokens, current_period_start, current_period_end') as { data: Pick<SubRow, 'user_id' | 'plan' | 'monthly_limit_tokens' | 'current_period_start' | 'current_period_end'>[] | null }
+  const { data: subs } = await supabase
+    .from('subscriptions')
+    .select('user_id, plan, monthly_limit_tokens, current_period_start, current_period_end')
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: usage } = await (supabase.from('token_usage') as any)
-    .select('user_id, tokens_used, created_at') as { data: Pick<UsageRow, 'user_id' | 'tokens_used' | 'created_at'>[] | null }
+  const { data: usage } = await supabase
+    .from('token_usage')
+    .select('user_id, tokens_used, created_at')
 
   return (users ?? []).map((u) => {
     const sub = subs?.find((s) => s.user_id === u.id)
@@ -57,30 +61,30 @@ export async function updateUserLimit(userId: string, newLimit: number) {
   await requireAdmin()
   const supabase = await createServiceClient()
 
-  // Check if a subscription row exists first.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: existing } = await (supabase.from('subscriptions') as any)
+  const { data: existing } = await supabase
+    .from('subscriptions')
     .select('user_id')
     .eq('user_id', userId)
-    .single() as { data: { user_id: string } | null }
+    .maybeSingle()
 
   if (existing) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from('subscriptions') as any)
+    await supabase
+      .from('subscriptions')
       .update({ monthly_limit_tokens: newLimit })
       .eq('user_id', userId)
   } else {
-    // No subscription yet — create one so the limit actually applies.
     const now = new Date().toISOString().split('T')[0]
     const end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from('subscriptions') as any).insert({
+    await supabase.from('subscriptions').insert({
       user_id: userId,
       plan: 'free',
       monthly_limit_tokens: newLimit,
       current_period_start: now,
       current_period_end: end,
       extra_tokens: 0,
+      credits: 0,
+      stripe_customer_id: null,
+      stripe_subscription_id: null,
     })
   }
 
@@ -88,35 +92,43 @@ export async function updateUserLimit(userId: string, newLimit: number) {
   revalidatePath('/dashboard')
 }
 
-export async function updateUserCredits(userId: string, credits: number) {
-  await requireAdmin()
+export async function updateUserCredits(userId: string, credits: number): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    await requireAdmin()
+  } catch {
+    return { ok: false, error: 'NOT_ADMIN' }
+  }
+
+  if (!Number.isInteger(credits) || credits < 0 || credits > 10000) {
+    return { ok: false, error: 'INVALID_CREDITS' }
+  }
+
   const supabase = await createServiceClient()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: existing, error: lookupErr } = await (supabase.from('subscriptions') as any)
+  const { data: existing, error: lookupErr } = await supabase
+    .from('subscriptions')
     .select('user_id')
-    .eq('user_id', userId) as { data: { user_id: string }[] | null; error: { message?: string } | null }
+    .eq('user_id', userId)
 
   if (lookupErr) {
     console.error('[admin] updateUserCredits lookup failed:', lookupErr)
-    throw new Error('SUBSCRIPTION_LOOKUP_FAILED')
+    return { ok: false, error: 'SUBSCRIPTION_LOOKUP_FAILED' }
   }
 
   if (existing && existing.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: updateErr } = await (supabase.from('subscriptions') as any)
+    const { error: updateErr } = await supabase
+      .from('subscriptions')
       .update({ credits })
-      .eq('user_id', userId) as { error: { message?: string } | null }
+      .eq('user_id', userId)
 
     if (updateErr) {
       console.error('[admin] updateUserCredits update failed:', updateErr)
-      throw new Error('SUBSCRIPTION_UPDATE_FAILED')
+      return { ok: false, error: 'SUBSCRIPTION_UPDATE_FAILED' }
     }
   } else {
     const now = new Date().toISOString().split('T')[0]
     const end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: insertErr } = await (supabase.from('subscriptions') as any).insert({
+    const { error: insertErr } = await supabase.from('subscriptions').insert({
       user_id: userId,
       plan: 'free',
       monthly_limit_tokens: 0,
@@ -124,83 +136,71 @@ export async function updateUserCredits(userId: string, credits: number) {
       current_period_end: end,
       extra_tokens: 0,
       credits,
-    }) as { error: { message?: string } | null }
+      stripe_customer_id: null,
+      stripe_subscription_id: null,
+    })
 
     if (insertErr) {
       console.error('[admin] updateUserCredits insert failed:', insertErr)
-      throw new Error('SUBSCRIPTION_INSERT_FAILED')
+      return { ok: false, error: 'SUBSCRIPTION_INSERT_FAILED' }
     }
   }
 
   revalidatePath('/admin/users')
   revalidatePath('/dashboard')
+  return { ok: true }
 }
 
-type ReportWithUser = Database['public']['Tables']['reports']['Row'] & {
-  users: Pick<Database['public']['Tables']['users']['Row'], 'full_name' | 'email'> | null
+export type ReportWithUser = ReportRow & {
+  users: Pick<UserRow, 'full_name' | 'email'> | null
 }
 
 export async function getAllReports(): Promise<ReportWithUser[]> {
   await requireAdmin()
   const supabase = await createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data } = await (supabase.from('reports') as any)
+  const { data } = await supabase
+    .from('reports')
     .select('*, users(full_name, email)')
-    .order('created_at', { ascending: false }) as { data: ReportWithUser[] | null }
+    .order('created_at', { ascending: false }) as unknown as { data: ReportWithUser[] | null }
   return data ?? []
 }
 
 export async function deleteAnyReport(reportId: string) {
   await requireAdmin()
   const supabase = await createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase.from('reports') as any)
+  await supabase
+    .from('reports')
     .delete()
     .eq('id', reportId)
   revalidatePath('/admin/reports')
-}
-
-type PaymentRow = {
-  id: string
-  conversation_id: string
-  user_id: string
-  pack_id: string
-  report_count: number
-  price_try: number
-  status: 'pending' | 'completed' | 'failed'
-  iyzico_payment_id: string | null
-  created_at: string
-  completed_at: string | null
 }
 
 export async function getAdminDashboardKpis() {
   await requireAdmin()
   const supabase = await createServiceClient()
 
-  // Use auth.admin to count ALL users, not just public.users
-  let totalUsers = 0
-  try {
-    const { data: { users: authUsers } } = await supabase.auth.admin.listUsers({ perPage: 1 })
-    // listUsers returns total in the response; if not available, fall back to public.users count
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { count: publicCount } = await (supabase.from('users') as any).select('*', { count: 'exact', head: true }) as { count: number }
-    totalUsers = Math.max(authUsers?.length ? (authUsers as unknown as { aud?: string }[]).length + (publicCount ?? 0) : publicCount ?? 0, publicCount ?? 0)
-  } catch {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { count } = await (supabase.from('users') as any).select('*', { count: 'exact', head: true }) as { count: number }
-    totalUsers = count ?? 0
-  }
+  const { count: totalUsers } = await supabase
+    .from('users')
+    .select('*', { count: 'exact', head: true })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { count: totalReports } = await (supabase.from('reports') as any).select('*', { count: 'exact', head: true }) as { count: number }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { count: fullReports } = await (supabase.from('reports') as any).select('*', { count: 'exact', head: true }).eq('is_full_report', true) as { count: number }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { count: premiumUsers } = await (supabase.from('subscriptions') as any).select('*', { count: 'exact', head: true }).in('plan', ['starter', 'pro']) as { count: number }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: payments } = await (supabase.from('iyzico_pending_payments') as any)
+  const { count: totalReports } = await supabase
+    .from('reports')
+    .select('*', { count: 'exact', head: true })
+
+  const { count: fullReports } = await supabase
+    .from('reports')
+    .select('*', { count: 'exact', head: true })
+    .eq('is_full_report', true)
+
+  const { count: premiumUsers } = await supabase
+    .from('subscriptions')
+    .select('*', { count: 'exact', head: true })
+    .in('plan', ['starter', 'pro'])
+
+  const { data: payments } = await supabase
+    .from('iyzico_pending_payments')
     .select('price_try, status, created_at')
-    .order('created_at', { ascending: false }) as { data: Pick<PaymentRow, 'price_try' | 'status' | 'created_at'>[] | null }
+    .order('created_at', { ascending: false })
 
   const totalRevenue = (payments ?? [])
     .filter(p => p.status === 'completed')
@@ -211,44 +211,51 @@ export async function getAdminDashboardKpis() {
   const paymentCount = (payments ?? []).filter(p => p.status === 'completed').length
 
   return {
-    totalUsers,
-    totalReports,
-    fullReports,
-    premiumUsers,
+    totalUsers: totalUsers ?? 0,
+    totalReports: totalReports ?? 0,
+    fullReports: fullReports ?? 0,
+    premiumUsers: premiumUsers ?? 0,
     totalRevenue,
     pendingRevenue,
     paymentCount,
   }
 }
 
-export async function getAllPayments() {
+export async function getAllPayments(): Promise<PaymentRow[]> {
   await requireAdmin()
   const supabase = await createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data } = await (supabase.from('iyzico_pending_payments') as any)
+  const { data } = await supabase
+    .from('iyzico_pending_payments')
     .select('*')
-    .order('created_at', { ascending: false }) as { data: PaymentRow[] | null }
+    .order('created_at', { ascending: false })
   return data ?? []
 }
 
 export async function getAdminRecentActivity() {
   await requireAdmin()
   const supabase = await createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: recentUsers } = await (supabase.from('users') as any)
+
+  const { data: recentUsers } = await supabase
+    .from('users')
     .select('id, email, full_name, created_at')
     .order('created_at', { ascending: false })
-    .limit(5) as { data: Pick<UserRow, 'id' | 'email' | 'full_name' | 'created_at'>[] | null }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: recentReports } = await (supabase.from('reports') as any)
+    .limit(5)
+
+  const { data: recentReports } = await supabase
+    .from('reports')
     .select('id, input_json, created_at, users(full_name, email)')
     .order('created_at', { ascending: false })
-    .limit(5) as { data: (Pick<Database['public']['Tables']['reports']['Row'], 'id' | 'input_json' | 'created_at'> & { users: { full_name: string | null, email: string } | null })[] | null }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: recentPayments } = await (supabase.from('iyzico_pending_payments') as any)
+    .limit(5) as unknown as {
+      data: (Pick<ReportRow, 'id' | 'input_json' | 'created_at'> & {
+        users: { full_name: string | null; email: string } | null
+      })[] | null
+    }
+
+  const { data: recentPayments } = await supabase
+    .from('iyzico_pending_payments')
     .select('*')
     .order('created_at', { ascending: false })
-    .limit(5) as { data: PaymentRow[] | null }
+    .limit(5)
 
   return {
     recentUsers: recentUsers ?? [],
@@ -257,37 +264,34 @@ export async function getAdminRecentActivity() {
   }
 }
 
-// Enhanced user list — uses auth.admin.listUsers() to catch users missing from public.users
 export async function getAllUsersDetailed() {
   await requireAdmin()
   const supabase = await createServiceClient()
 
-  // Fetch all auth users (service_role gives access to auth.admin)
-  let authUsers: { id: string; email: string; created_at: string; user_metadata?: { full_name?: string } }[] = []
+  let authUsers: { id: string; email?: string; created_at: string; user_metadata?: { full_name?: string } }[] = []
   try {
     const { data } = await supabase.auth.admin.listUsers()
-    authUsers = (data?.users ?? []) as unknown as typeof authUsers
+    authUsers = (data?.users ?? []) as typeof authUsers
   } catch (err) {
     console.error('[admin] auth.admin.listUsers failed:', err)
-    // fallback: just public.users
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: publicUsers } = await (supabase.from('users') as any)
+  const { data: publicUsers } = await supabase
+    .from('users')
     .select('id, email, full_name, role, created_at')
-    .order('created_at', { ascending: false }) as { data: Pick<UserRow, 'id' | 'email' | 'full_name' | 'role' | 'created_at'>[] | null }
+    .order('created_at', { ascending: false })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: subs } = await (supabase.from('subscriptions') as any)
-    .select('*') as { data: (SubRow & { extra_tokens: number })[] | null }
+  const { data: subs } = await supabase
+    .from('subscriptions')
+    .select('*')
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: reportCounts } = await (supabase.from('reports') as any)
-    .select('user_id, id') as { data: Pick<Database['public']['Tables']['reports']['Row'], 'user_id' | 'id'>[] | null }
+  const { data: reportCounts } = await supabase
+    .from('reports')
+    .select('user_id, id')
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: payments } = await (supabase.from('iyzico_pending_payments') as any)
-    .select('user_id, price_try, status') as { data: Pick<PaymentRow, 'user_id' | 'price_try' | 'status'>[] | null }
+  const { data: payments } = await supabase
+    .from('iyzico_pending_payments')
+    .select('user_id, price_try, status')
 
   const reportCountMap = new Map<string, number>()
   for (const r of reportCounts ?? []) {
@@ -306,11 +310,11 @@ export async function getAllUsersDetailed() {
 
   const publicUserMap = new Map((publicUsers ?? []).map(u => [u.id, u]))
 
-  function calcCredits(sub: (SubRow & { extra_tokens: number; credits?: number }) | null | undefined): number {
+  function calcCredits(sub: SubRow | null | undefined): number {
     return sub?.credits ?? 0
   }
 
-  function calcReportLimit(sub: (SubRow & { extra_tokens: number }) | null | undefined): number {
+  function calcReportLimit(sub: SubRow | null | undefined): number {
     if (!sub) return 0
     const plan = (sub.plan === 'starter' || sub.plan === 'pro') ? (sub.plan as PlanTier) : 'free'
     const planLimit = PLAN_REPORT_LIMITS[plan] ?? 0
@@ -320,31 +324,31 @@ export async function getAllUsersDetailed() {
     return baseLimit < 0 ? -1 : baseLimit + extra
   }
 
-  // Merge: start with auth users, enrich with public.users data
   const merged = new Map<string, {
     id: string
     email: string
     full_name: string | null
     role: string
     created_at: string
-    sub: SubRow & { extra_tokens: number } | null
+    sub: SubRow | null
     reportCount: number
     reportLimit: number
     credits: number
     paymentCount: number
     paymentTotal: number
   }>()
+
   for (const au of authUsers) {
     const pu = publicUserMap.get(au.id)
     const pmt = paymentMap.get(au.id)
-    const sub = subs?.find(s => s.user_id === au.id)
+    const sub = subs?.find(s => s.user_id === au.id) ?? null
     merged.set(au.id, {
       id: au.id,
       email: au.email ?? pu?.email ?? '?',
       full_name: pu?.full_name ?? au.user_metadata?.full_name ?? null,
       role: pu?.role ?? 'user',
       created_at: pu?.created_at ?? au.created_at,
-      sub: sub ?? null,
+      sub,
       reportCount: reportCountMap.get(au.id) ?? 0,
       reportLimit: calcReportLimit(sub),
       credits: calcCredits(sub),
@@ -353,21 +357,20 @@ export async function getAllUsersDetailed() {
     })
   }
 
-  // Add any public.users not in auth (shouldn't happen but defensive)
   for (const pu of publicUsers ?? []) {
     if (!merged.has(pu.id)) {
       const pmt = paymentMap.get(pu.id)
-      const sub = subs?.find(s => s.user_id === pu.id)
+      const sub = subs?.find(s => s.user_id === pu.id) ?? null
       merged.set(pu.id, {
         id: pu.id,
         email: pu.email,
         full_name: pu.full_name,
         role: pu.role,
         created_at: pu.created_at,
-        sub: sub ?? null,
+        sub,
         reportCount: reportCountMap.get(pu.id) ?? 0,
         reportLimit: calcReportLimit(sub),
-      credits: calcCredits(sub),
+        credits: calcCredits(sub),
         paymentCount: pmt?.count ?? 0,
         paymentTotal: pmt?.total ?? 0,
       })

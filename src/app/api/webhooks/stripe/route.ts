@@ -18,18 +18,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  // Service client — bypasses RLS, no session needed
   const supabase = await createServiceClient()
 
-  // Idempotency: aynı event ID daha önce işlendiyse skip
+  // Idempotency: skip already-processed events
   const eventId = event.id
-  const { data: existing } = await supabase
+  const { data: existingEvent } = await supabase
     .from('iyzico_pending_payments')
     .select('conversation_id')
     .eq('conversation_id', `stripe_${eventId}`)
     .maybeSingle()
 
-  if (existing) {
+  if (existingEvent) {
     console.log('[stripe webhook] Duplicate event skipped:', eventId)
     return NextResponse.json({ received: true })
   }
@@ -51,18 +50,18 @@ export async function POST(req: NextRequest) {
           const tokensAdded = parseInt(tokensRaw, 10) || 0
 
           if (tokensAdded > 0) {
-            const { data: existing } = await supabase
+            const { data: sub } = await supabase
               .from('subscriptions')
               .select('extra_tokens')
               .eq('user_id', userId)
-              .single() as { data: { extra_tokens: number | null } | null; error: unknown }
+              .single()
 
-            const currentExtra = existing?.extra_tokens ?? 0
+            const currentExtra = sub?.extra_tokens ?? 0
             const safeCurrent = isNaN(currentExtra) || currentExtra < 0 ? 0 : currentExtra > 10000 ? 10000 : currentExtra
             const newExtra = safeCurrent + tokensAdded
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (supabase.from('subscriptions') as any)
+            await supabase
+              .from('subscriptions')
               .update({ extra_tokens: newExtra })
               .eq('user_id', userId)
 
@@ -77,15 +76,16 @@ export async function POST(req: NextRequest) {
         const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id
         const tierLimits: Record<string, number> = { starter: 250000, pro: 500000, free: 80000 }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('subscriptions') as any).upsert({
+        await supabase.from('subscriptions').upsert({
           user_id: userId,
-          plan: tier,
+          plan: tier as 'free' | 'starter' | 'pro',
           monthly_limit_tokens: tierLimits[tier] ?? 250000,
           current_period_start: new Date().toISOString().slice(0, 10),
           current_period_end: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().slice(0, 10),
           stripe_customer_id: customerId ?? null,
-          stripe_subscription_id: session.subscription as string ?? null,
+          stripe_subscription_id: (session.subscription as string) ?? null,
+          extra_tokens: 0,
+          credits: 0,
         }, { onConflict: 'user_id' })
 
         console.log('[stripe webhook] Subscription activated', { userId, tier })
@@ -93,23 +93,21 @@ export async function POST(req: NextRequest) {
       }
 
       case 'customer.subscription.updated': {
-        const sub = event.data.object as Stripe.Subscription
+        const sub = event.data.object as Stripe.Subscription & { current_period_end?: number }
         if (sub.status === 'active' || sub.status === 'past_due') {
-          const { data: existing } = await supabase
+          const { data: existingSub } = await supabase
             .from('subscriptions')
             .select('user_id')
             .eq('stripe_subscription_id', sub.id)
-            .single() as { data: { user_id: string } | null; error: unknown }
+            .single()
 
-          if (existing) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const periodEnd = (sub as any).current_period_end as number | undefined
-            const endDate = new Date((periodEnd ?? Date.now() / 1000 + 30 * 86400) * 1000)
+          if (existingSub) {
+            const endDate = new Date(((sub.current_period_end ?? Date.now() / 1000 + 30 * 86400)) * 1000)
               .toISOString().slice(0, 10)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (supabase.from('subscriptions') as any).update({
-              current_period_end: endDate,
-            }).eq('stripe_subscription_id', sub.id)
+            await supabase
+              .from('subscriptions')
+              .update({ current_period_end: endDate })
+              .eq('stripe_subscription_id', sub.id)
           }
         }
         break
@@ -117,11 +115,10 @@ export async function POST(req: NextRequest) {
 
       case 'customer.subscription.deleted': {
         const sub = event.data.object as Stripe.Subscription
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('subscriptions') as any).update({
-          plan: 'free',
-          monthly_limit_tokens: 80000,
-        }).eq('stripe_subscription_id', sub.id)
+        await supabase
+          .from('subscriptions')
+          .update({ plan: 'free', monthly_limit_tokens: 80000 })
+          .eq('stripe_subscription_id', sub.id)
 
         console.log('[stripe webhook] Subscription cancelled → free', sub.id)
         break

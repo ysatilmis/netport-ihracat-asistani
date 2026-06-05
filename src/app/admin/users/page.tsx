@@ -1,7 +1,6 @@
-import { getAllUsersDetailed, updateUserCredits } from '@/actions/admin'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { getAllUsersDetailed } from '@/actions/admin'
 import { Badge } from '@/components/ui/badge'
+import { CreditForm } from './credit-form'
 import Link from 'next/link'
 
 export default async function AdminUsersPage() {
@@ -31,7 +30,7 @@ export default async function AdminUsersPage() {
                 <th className="px-5 py-3 text-left">Rapor</th>
                 <th className="px-5 py-3 text-left">Kredi</th>
                 <th className="px-5 py-3 text-left">Ödeme</th>
-                <th className="px-5 py-3 text-left">Limit Güncelle</th>
+                <th className="px-5 py-3 text-left">Kredi Güncelle</th>
               </tr>
             </thead>
             <tbody>
@@ -54,43 +53,12 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-function adminOverrideValue(sub: { monthly_limit_tokens: number } | null): string | number {
-  const v = sub?.monthly_limit_tokens ?? 0
-  return (v > 0 && v <= 1000) ? v : ''
-}
+type UserData = Awaited<ReturnType<typeof getAllUsersDetailed>>[number]
 
-function UserRow({ user }: {
-  user: {
-    id: string
-    email: string
-    full_name: string | null
-    role: string
-    created_at: string
-    sub: {
-      plan: string
-      monthly_limit_tokens: number
-      extra_tokens: number
-      current_period_start: string
-      current_period_end: string
-    } | null
-    reportCount: number
-    reportLimit: number
-    credits: number
-    paymentCount: number
-    paymentTotal: number
-  }
-}) {
+function UserRow({ user }: { user: UserData }) {
   const sub = user.sub
   const plan = sub?.plan ?? 'free'
   const extraPacks = sub?.extra_tokens ?? 0
-
-  async function handleSetCredits(formData: FormData) {
-    'use server'
-    const newCredits = parseInt(formData.get('credits') as string)
-    if (!isNaN(newCredits) && newCredits >= 0) {
-      await updateUserCredits(user.id, newCredits)
-    }
-  }
 
   return (
     <tr className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60 transition-colors">
@@ -130,7 +98,7 @@ function UserRow({ user }: {
       <td className="px-5 py-4">
         <span className="font-mono tabular-nums text-slate-700">{user.reportCount}</span>
       </td>
-            <td className="px-5 py-4">
+      <td className="px-5 py-4">
         <span className={`font-mono tabular-nums text-sm font-semibold ${user.credits === 0 ? 'text-red-500' : user.credits === 1 ? 'text-amber-600' : 'text-green-700'}`}>
           {user.credits}
         </span>
@@ -146,38 +114,17 @@ function UserRow({ user }: {
           <span className="text-xs text-slate-400 font-mono">—</span>
         )}
       </td>
-            <td className="px-5 py-4">
-        <form action={handleSetCredits} className="flex gap-2 items-center">
-          <Input
-            name="credits"
-            type="number"
-            defaultValue={user.credits}
-            className="w-20 h-9 text-sm font-mono"
-            min={0}
-            max={1000}
-            step={1}
-          />
-          <span className="text-[10px] text-slate-400 font-mono">kredi</span>
-          <Button type="submit" size="sm" variant="outline">Set</Button>
-        </form>
+      <td className="px-5 py-4">
+        <CreditForm userId={user.id} defaultCredits={user.credits} />
       </td>
     </tr>
   )
 }
 
-function UserCard({ user }: Parameters<typeof UserRow>[0]) {
+function UserCard({ user }: { user: UserData }) {
   const sub = user.sub
   const plan = sub?.plan ?? 'free'
   const extraPacks = sub?.extra_tokens ?? 0
-
-  async function handleSetCredits(formData: FormData) {
-    'use server'
-    const newCredits = parseInt(formData.get('credits') as string)
-    if (!isNaN(newCredits) && newCredits >= 0) {
-      const { updateUserCredits } = await import('@/actions/admin')
-      await updateUserCredits(user.id, newCredits)
-    }
-  }
 
   return (
     <div className="px-4 py-4 space-y-2">
@@ -201,12 +148,7 @@ function UserCard({ user }: Parameters<typeof UserRow>[0]) {
         {extraPacks > 0 && <span className="text-green-700">+{extraPacks} ek paket</span>}
         {user.paymentCount > 0 && <span>{user.paymentCount} ödeme · ₺{user.paymentTotal.toLocaleString('tr-TR')}</span>}
       </div>
-      <form action={handleSetCredits} className="flex gap-2 items-center">
-        <Input name="credits" type="number" defaultValue={user.credits}
-          className="w-20 h-8 text-sm font-mono" min={0} max={1000} step={1} />
-        <span className="text-[10px] text-slate-400 font-mono">kredi</span>
-        <Button type="submit" size="sm" variant="outline">Set</Button>
-      </form>
+      <CreditForm userId={user.id} defaultCredits={user.credits} />
     </div>
   )
 }

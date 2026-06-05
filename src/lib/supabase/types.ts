@@ -1,5 +1,7 @@
 export type Database = {
   public: {
+    Views: Record<string, never>
+    Functions: Record<string, never>
     Tables: {
       users: {
         Row: {
@@ -13,6 +15,7 @@ export type Database = {
         }
         Insert: Omit<Database['public']['Tables']['users']['Row'], 'created_at'>
         Update: Partial<Database['public']['Tables']['users']['Insert']>
+        Relationships: []
       }
       subscriptions: {
         Row: {
@@ -22,9 +25,14 @@ export type Database = {
           monthly_limit_tokens: number
           current_period_start: string
           current_period_end: string
+          extra_tokens: number
+          credits: number
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
         }
         Insert: Omit<Database['public']['Tables']['subscriptions']['Row'], 'id'>
         Update: Partial<Database['public']['Tables']['subscriptions']['Insert']>
+        Relationships: []
       }
       token_usage: {
         Row: {
@@ -38,6 +46,7 @@ export type Database = {
         }
         Insert: Omit<Database['public']['Tables']['token_usage']['Row'], 'id' | 'created_at'>
         Update: never
+        Relationships: []
       }
       reports: {
         Row: {
@@ -53,6 +62,7 @@ export type Database = {
         }
         Insert: Omit<Database['public']['Tables']['reports']['Row'], 'id' | 'created_at'>
         Update: never
+        Relationships: []
       }
       prompt_templates: {
         Row: {
@@ -66,6 +76,24 @@ export type Database = {
         }
         Insert: Omit<Database['public']['Tables']['prompt_templates']['Row'], 'id'>
         Update: Partial<Database['public']['Tables']['prompt_templates']['Insert']>
+        Relationships: []
+      }
+      iyzico_pending_payments: {
+        Row: {
+          id: string
+          conversation_id: string
+          user_id: string
+          pack_id: string
+          report_count: number
+          price_try: number
+          status: 'pending' | 'completed' | 'failed'
+          iyzico_payment_id: string | null
+          created_at: string
+          completed_at: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['iyzico_pending_payments']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['iyzico_pending_payments']['Insert']>
+        Relationships: []
       }
     }
   }

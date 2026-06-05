@@ -1,4 +1,5 @@
 import { getAdminDashboardKpis, getAdminRecentActivity } from '@/actions/admin'
+import { getOpenRouterCredits } from '@/lib/openrouter'
 import Link from 'next/link'
 
 function formatDate(d: string) {
@@ -6,8 +7,11 @@ function formatDate(d: string) {
 }
 
 export default async function AdminDashboardPage() {
-  const kpis = await getAdminDashboardKpis()
-  const activity = await getAdminRecentActivity()
+  const [kpis, activity, orCredits] = await Promise.all([
+    getAdminDashboardKpis(),
+    getAdminRecentActivity(),
+    getOpenRouterCredits(),
+  ])
 
   const cards = [
     { label: 'Toplam Kullanıcı', value: kpis.totalUsers, href: '/admin/users', color: 'bg-blue-50 border-blue-200 text-blue-800' },
@@ -35,6 +39,60 @@ export default async function AdminDashboardPage() {
           </Link>
         ))}
       </div>
+
+      {/* OpenRouter Kredi Durumu */}
+      {orCredits && (
+        <div className={`mb-6 rounded-xl border p-4 flex items-center gap-4 ${
+          orCredits.warningLevel === 'critical' ? 'bg-red-50 border-red-300' :
+          orCredits.warningLevel === 'warning' ? 'bg-amber-50 border-amber-300' :
+          'bg-green-50 border-green-200'
+        }`}>
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold ${
+            orCredits.warningLevel === 'critical' ? 'bg-red-100 text-red-700' :
+            orCredits.warningLevel === 'warning' ? 'bg-amber-100 text-amber-700' :
+            'bg-green-100 text-green-700'
+          }`}>
+            {orCredits.warningLevel === 'critical' ? '!' : orCredits.warningLevel === 'warning' ? '⚠' : '✓'}
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-sm font-semibold text-slate-900">OpenRouter Kredi Durumu</span>
+              {orCredits.warningLevel !== 'ok' && (
+                <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                  orCredits.warningLevel === 'critical' ? 'bg-red-200 text-red-800' : 'bg-amber-200 text-amber-800'
+                }`}>
+                  {orCredits.warningLevel === 'critical' ? 'Kritik' : 'Uyarı'}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-4 text-xs font-mono text-slate-600">
+              <span>Kalan: <strong className={orCredits.warningLevel === 'critical' ? 'text-red-700' : orCredits.warningLevel === 'warning' ? 'text-amber-700' : 'text-green-700'}>
+                ${orCredits.remainingCredits.toFixed(2)}
+              </strong></span>
+              <span>Kullanılan: ${orCredits.usedCredits.toFixed(2)}</span>
+              <span>Toplam: ${orCredits.totalCredits.toFixed(2)}</span>
+            </div>
+            <div className="mt-2 h-1.5 rounded-full bg-slate-200 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  orCredits.warningLevel === 'critical' ? 'bg-red-500' :
+                  orCredits.warningLevel === 'warning' ? 'bg-amber-400' :
+                  'bg-green-500'
+                }`}
+                style={{ width: `${Math.min(100, orCredits.remainingPercent * 100).toFixed(1)}%` }}
+              />
+            </div>
+          </div>
+          <a
+            href="https://openrouter.ai/settings/credits"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-mono text-[var(--primary)] hover:underline shrink-0"
+          >
+            Kredi Yükle →
+          </a>
+        </div>
+      )}
 
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
