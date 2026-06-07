@@ -8,6 +8,7 @@ export interface PreviousSection {
 export interface PromptContext {
   selectedCountry?: string
   previousSections: Record<string, PreviousSection>
+  factSheetBlock?: string
 }
 
 export interface ReportSection {
@@ -23,6 +24,10 @@ export interface ReportSection {
 // Helper: önceki section'ları "## ÖNCEKİ ANALİZ" bloğu olarak inject eder.
 // includeKeys: hangi önceki bölümler bağlam olarak verilecek.
 // ─────────────────────────────────────────────────────────────────────────
+function buildFactSheetBlock(ctx: PromptContext): string {
+  if (!ctx.factSheetBlock) return ''
+  return '\n' + ctx.factSheetBlock + '\n'
+}
 function buildContextBlock(ctx: PromptContext, includeKeys: string[]): string {
   const blocks = includeKeys
     .filter((k) => ctx.previousSections[k])
