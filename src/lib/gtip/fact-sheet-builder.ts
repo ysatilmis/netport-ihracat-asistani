@@ -20,6 +20,8 @@ import { resolveGtipCode, describeGtip } from './resolver';
 import type { GtipResolveResult } from './types';
 import { getEffectiveRecency } from './recency';
 import type { RecencyWindow } from './fact-sheet-types';
+import { generateText } from 'ai';
+import { openrouter } from '@/lib/llm';
 
 /** Builder girdisi */
 export interface FactSheetBuilderInput {
@@ -186,10 +188,20 @@ export class FactSheetBuilder {
     citations: { url: string; title?: string }[];
     usage: { totalTokens: number };
   }> {
-    const { PerplexityClient } = await import('../perplexity/index');
-    const client = new PerplexityClient();
-    const result = await client.search({ query, recency, maxTokens: 512 });
-    return result;
+    const result = await generateText({
+      model: openrouter('perplexity/sonar-pro'),
+      messages: [{ role: 'user', content: query }],
+      temperature: 0.2,
+      maxOutputTokens: 512,
+      providerOptions: {
+        openrouter: { search_recency_filter: recency.perplexityParam ?? 'year' },
+      },
+    });
+    return {
+      content: result.text,
+      citations: [],
+      usage: { totalTokens: result.usage?.totalTokens ?? 0 },
+    };
   }
 
   /**
