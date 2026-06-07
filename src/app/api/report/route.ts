@@ -9,7 +9,10 @@ import {
   PHASE_META,
   type PromptContext,
   type PreviousSection,
-} from '@/lib/report-prompts'
+} from '@/lib/report-prompts'
+import { FactSheetBuilder } from '@/lib/gtip/fact-sheet-builder'
+import { renderFactSheetBlock } from '@/lib/gtip/render'
+import { resolveGtip } from '@/lib/gtip/resolver'
 
 export const maxDuration = 300
 
