@@ -48,3 +48,5 @@ next-env.d.ts
 /e2e/.auth/
 /blob-report/
 /playwright/.cache/
+
+.vercel
