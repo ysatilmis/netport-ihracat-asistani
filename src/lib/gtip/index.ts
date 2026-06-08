@@ -1,6 +1,8 @@
 // GTİP (HS Code) modülü — barrel export
 export * from './types';
 export * from './data';
+export * from './hs-data';
+export * from './common-tr-exports';
 export * from './validator';
 export * from './resolver';
 export * from './fact-sheet-types';

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { HS_ENTRIES, lookupHs } from '@/lib/grounding/hs-data'
+import { HS_ENTRIES, lookupHs } from '@/lib/gtip/hs-data'
 
 describe('hs-data', () => {
   it('veri seti yüklendi (5000+ kalem)', () => {

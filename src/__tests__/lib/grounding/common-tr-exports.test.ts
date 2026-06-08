@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { matchCommonExport } from '@/lib/grounding/common-tr-exports'
+import { matchCommonExport } from '@/lib/gtip/common-tr-exports'
 
 describe('matchCommonExport', () => {
   it('zeytinyağı → 1509', () => {
