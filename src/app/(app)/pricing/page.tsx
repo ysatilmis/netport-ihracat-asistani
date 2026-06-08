@@ -216,7 +216,7 @@ export default async function PricingPage() {
               Ödeme linki email'ine gelir, kredi kartınla ödersin. Ödeme onaylanınca rapor hakların
               hesabına eklenir. Soruların için:{' '}
               <a href={`https://wa.me/${WHATSAPP_NUMBER}`} className="font-medium text-[var(--primary)] hover:underline">
-                +90 532 137 71 58
+                +90 555 989 12 45
               </a>
             </p>
           </div>

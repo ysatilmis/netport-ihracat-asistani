@@ -147,7 +147,7 @@ NEXT_PUBLIC_ENFORCE_TOKEN_LIMITS=true
 ## 2026-05-24 Değişiklikleri
 
 1. **Pricing sayfası:** Strikethrough fiyat (999→499, 2499→1299), "kısa süreliğine" indirim, 2 paket
-2. **WhatsApp:** Numara Yüksel Hanım'a güncellendi (+90 532 137 71 58), dinamik mesaj (email'li)
+2. **WhatsApp:** Numara Yüksel Hanım'a güncellendi (+90 555 989 12 45), dinamik mesaj (email'li)
 3. **10 raporluk paket:** ₺1.299 — eklendi
 4. **Sınırsız Pro:** Kaldırıldı (placeholder silindi)
 5. **Register:** Confirm mail bilgilendirme sayfası eklendi
