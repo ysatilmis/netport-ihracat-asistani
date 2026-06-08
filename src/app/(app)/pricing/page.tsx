@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 }
 
 // Yüksel Hanım'ın WhatsApp numarası
-const WHATSAPP_NUMBER = '905321377158'
+const WHATSAPP_NUMBER = '905559891245'
 
 function buildWhatsAppUrl(userEmail?: string | null, packLabel?: string, packPrice?: number) {
   const emailPart = userEmail ? `,${userEmail} kullanıcı hesabım için` : ''
