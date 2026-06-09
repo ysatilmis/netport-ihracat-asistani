@@ -11,6 +11,8 @@ export const reportRequestSchema = z.object({
   product: trimmedString(2, 200),
   country: trimmedString(2, 100),
   countriesContext: z.string().max(20000).optional(),
+  gtipCode: z.string().max(14).nullable().optional(),
+  gtipDesc: z.string().max(200).nullable().optional(),
 })
 
 export const countriesRequestSchema = z.object({

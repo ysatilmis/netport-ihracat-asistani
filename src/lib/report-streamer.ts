@@ -22,6 +22,8 @@ export interface StreamerState {
   reportProduct: string
   selectedCountry: string
   savedReportId: string | null
+  gtipCode: string | null
+  gtipDesc: string | null
 }
 
 const STORAGE_KEY = 'netport-dashboard-state-v2'
@@ -42,6 +44,8 @@ function emptyState(): StreamerState {
     reportProduct: '',
     selectedCountry: '',
     savedReportId: null,
+    gtipCode: null,
+    gtipDesc: null,
   }
 }
 
@@ -219,7 +223,9 @@ class ReportStreamer {
             if (event.type === 'chunk' && event.text) {
               this.setState({ countriesText: this.state.countriesText + event.text })
             } else if (event.type === 'countries' && event.countries) {
-              this.setState({ countryOptions: event.countries, step: 'choosing' })
+              const gtipCode = (event as { gtipCode?: string }).gtipCode ?? null
+              const gtipDesc = (event as { gtipDesc?: string }).gtipDesc ?? null
+              this.setState({ countryOptions: event.countries, step: 'choosing', gtipCode, gtipDesc })
             } else if (event.type === 'countries_parse_error') {
               this.setState({
                 error: sanitizeError(event.message ?? 'Ülke listesi ayıklanamadı.'),
@@ -283,6 +289,8 @@ class ReportStreamer {
           product: this.state.reportProduct,
           country,
           countriesContext: this.state.countriesText,
+          gtipCode: this.state.gtipCode,
+          gtipDesc: this.state.gtipDesc,
         }),
         signal: controller.signal,
       })

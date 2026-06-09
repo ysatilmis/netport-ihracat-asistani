@@ -76,7 +76,30 @@ export async function POST(request: Request) {
   const productClean = body.product.trim()
   const countryClean = body.country.trim()
   const countriesContextText = body.countriesContext?.trim() || ''
+  const gtipCode = body.gtipCode?.trim() || null
+  const gtipDesc = body.gtipDesc?.trim() || null
   let totalTokens = 0
+
+  // GTİP grounding bloğu (legal_customs + negotiation prep prompt'larına eklenecek)
+  const gtipGroundingBlock = gtipCode
+    ? (() => {
+        const formatted = `${gtipCode.substring(0, 4)}.${gtipCode.substring(4, 6)}`
+        return [
+          '',
+          '## ⚠️ KESİN REFERANS VERİSİ (BU VERİLERİ KULLAN, UYDURMA)',
+          '',
+          `Bu ürünün Türkiye GTİP kodu: **${formatted} — ${gtipDesc || ''}**`,
+          'Bu kod kesindir. Gümrük tarifesi ve tüm referanslarda bu kodu kullan.',
+          'Uydurma veya yaklaşık GTİP kodu vermek YASAK.',
+          '',
+          '**Gümrük Birliği Uyarısı (tarım/gıda ürünleri için geçerli):**',
+          'Türkiye-AB Gümrük Birliği sadece sanayi ürünlerini kapsar.',
+          'Tarım ürünleri AB Ortak Tarım Politikası (CAP) kapsamındadır — ek vergi ve kota uygulanır.',
+          '"GB kapsamında %0 gümrük" ifadesi tarım ürünleri için YANLIŞTIR.',
+          '',
+        ].join('\n')
+      })()
+    : ''
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -127,7 +150,12 @@ export async function POST(request: Request) {
             selectedCountry: countryClean,
             previousSections,
           }
-          const prompt = section.buildPrompt(productClean, ctx)
+          let prompt = section.buildPrompt(productClean, ctx)
+
+          // GTİP grounding: legal_customs ve negotiation_prep section'larına enjekte et
+          if (gtipGroundingBlock && (section.key === 'legal_customs' || section.key === 'negotiation_prep' || section.key === 'executive_summary')) {
+            prompt = gtipGroundingBlock + '\n' + prompt
+          }
 
           let sectionText = ''
 

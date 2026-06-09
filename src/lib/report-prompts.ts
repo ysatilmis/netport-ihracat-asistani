@@ -90,6 +90,10 @@ export function extractSelectedCountry(text: string): string | undefined {
 // Tüm section prompt'larına inject edilen somutlaştırma kuralları
 const SOMUTLASTIRMA = `
 > 🎯 SOMUTLASTIRMA KURALI: Belirsiz tahminler, geniş aralıklar ve kaynak belirsiz rakamlar YASAK. Her veri için: değer + kaynak + yıl. Kaynak yoksa o satırı tamamen atla — boş tablo hücresi bile "tahmini" ifadeden iyidir. Bu rapor gerçek bir alıcıya sunulacak; her cümle işe yaramalı. "Yaklaşık", "genellikle", "çoğunlukla" gibi belirsiz zarflar yasak.
+>
+> ⚠️ TİCARET ANLAŞMALARI DOĞRULUK KURALI: Serbest Ticaret Anlaşması (STA) iddialarında KESİN OL. Türkiye'nin STA imzaladığı ülkeler: EFTA (İsviçre, Norveç, İzlanda, Lihtenştayn), İsrail, Makedonya, Bosna-Hersek, Fas, Tunus, Mısır, Filistin, Suriye (askıda), Gürcistan, Arnavutluk, Karadağ, Sırbistan, Şili, Ürdün, Morityus, Güney Kore, Malezya, Moldova, Faroe Adaları, Singapur, Kosova, Venezuela, Birleşik Krallık, Ukrayna, BAE, Katar. **Japonya, ABD, Çin, Hindistan, Kanada, Avustralya, Brezilya, Meksika, Suudi Arabistan ile STA YOKTUR.** Emin değilsen "STA bilgisi teyit edilmeli" yaz, ASLA uydurma.
+>
+> ⚠️ AB GÜMRÜK BİRLİĞİ KURALI: Türkiye-AB Gümrük Birliği SADECE sanayi ürünleri ve işlenmiş tarım ürünlerini kapsar. Temel tarım ürünleri (zeytinyağı, yaş meyve-sebze, et, süt, bal, bakliyat, fındık, kuru meyve vb.) GB KAPSAMINDA DEĞİLDİR. Bu ürünler AB Ortak Tarım Politikası (CAP) kapsamında ek vergi + tarife kotasına tabidir. "GB kapsamında %0 gümrük" ifadesi tarım ürünleri için YANLIŞTIR.
 `.trim()
 
 export const REPORT_SECTIONS: ReportSection[] = [
