@@ -27,13 +27,17 @@ export async function POST(request: Request) {
     await checkCredits(user.id)
   } catch (e) {
     const msg = (e as Error).message
-    if (msg === 'INSUFFICIENT_CREDITS') {
+    console.error('[report/countries] checkCredits failed:', msg)
+    if (msg === 'INSUFFICIENT_CREDITS' || msg.includes('SUBSCRIPTION')) {
       return new Response(
         JSON.stringify({ error: 'TOKEN_LIMIT_EXCEEDED' }),
         { status: 429, headers: { 'Content-Type': 'application/json' } },
       )
     }
-    throw e
+    return new Response(
+      JSON.stringify({ error: 'CREDIT_CHECK_FAILED' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
+    )
   }
 
   let rawBody: unknown
