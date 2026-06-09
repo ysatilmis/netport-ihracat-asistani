@@ -1,3 +1,16 @@
+# Netport İhracat Asistanı
+
+**Project root:** `C:\Users\Umut\netport-ihracat-asistanı`
+**GitHub:** https://github.com/ysatilmis/netport-ihracat-asistani.git
+**Production URL:** https://netportai.com
+**Supabase project:** `uvhtsnwwaouzqbqndjbl`
+
+## Tech
+- Next.js 15 + React + TypeScript
+- Supabase Auth (PKCE) + DB
+- OpenRouter (AI)
+- Vercel deployment
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
