@@ -18,7 +18,7 @@ export async function TokenMeter({ userId }: TokenMeterProps) {
     error = true
   }
 
-  const limitsActive = process.env.NEXT_PUBLIC_ENFORCE_TOKEN_LIMITS === 'true'
+  const limitsActive = process.env.ENFORCE_TOKEN_LIMITS === 'true'
 
   if (error) {
     return (

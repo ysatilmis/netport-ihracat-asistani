@@ -10,7 +10,9 @@ export interface CreditBalance {
  * Throws if subscription row not found.
  */
 export async function getCredits(userId: string): Promise<CreditBalance> {
-  const supabase = await createClient()
+  // Use service client so RLS never blocks reading the admin-assigned credit value.
+  // Safe: userId always comes from auth.getUser() in a server component — never from user input.
+  const supabase = await createServiceClient()
 
   const { data, error } = await supabase
     .from('subscriptions')
@@ -18,25 +20,16 @@ export async function getCredits(userId: string): Promise<CreditBalance> {
     .eq('user_id', userId)
     .maybeSingle()
 
-  if (error) throw new Error('SUBSCRIPTION_NOT_FOUND')
+  if (error) {
+    console.error('[token] getCredits query failed:', error)
+    return { credits: 0, plan: 'free' }
+  }
 
-  // No subscription row yet (new user, DB trigger not fired) — bootstrap via service role
   if (!data) {
-    const serviceSupabase = await createServiceClient()
-    const now = new Date().toISOString().split('T')[0]
-    const end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-    await serviceSupabase.from('subscriptions').insert({
-      user_id: userId,
-      plan: 'free',
-      monthly_limit_tokens: 0,
-      current_period_start: now,
-      current_period_end: end,
-      extra_tokens: 0,
-      credits: 1,
-      stripe_customer_id: null,
-      stripe_subscription_id: null,
-    })
-    return { credits: 1, plan: 'free' }
+    // No subscription row — DB trigger should have created one.
+    // Return 0 so the user sees the correct state; admin can assign credits via /admin/users.
+    console.warn('[token] getCredits: no subscription row for user', userId)
+    return { credits: 0, plan: 'free' }
   }
 
   return { credits: data.credits, plan: data.plan }
