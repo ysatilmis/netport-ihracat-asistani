@@ -36,7 +36,7 @@
               <table cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="border-radius:10px;background:#0f4c81;">
-                    <a href="{{ .ConfirmationURL }}"
+                    <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=signup"
                        style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;letter-spacing:0.1px;">
                       E-postamı Onayla
                     </a>
@@ -48,7 +48,7 @@
                 Butona tıklayamıyorsan bu bağlantıyı kopyalayıp tarayıcına yapıştır:
               </p>
               <p style="margin:6px 0 0;font-size:12px;color:#64748b;word-break:break-all;">
-                {{ .ConfirmationURL }}
+                {{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&amp;type=signup
               </p>
 
               <hr style="margin:28px 0;border:none;border-top:1px solid #e2e8f0;" />
