@@ -77,7 +77,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
     : report.output_text
 
   return (
-    <div className="max-w-7xl">
+    <div className="max-w-7xl w-full">
       {/* Breadcrumb */}
       <nav className="mb-4 flex items-center gap-2 text-sm text-slate-500" aria-label="Breadcrumb">
         <Link href="/results" className="hover:text-slate-900 transition-colors">

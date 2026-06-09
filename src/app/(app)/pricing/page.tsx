@@ -38,19 +38,19 @@ export default async function PricingPage() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12 md:py-16">
+    <main className="max-w-4xl mx-auto px-4 py-8 sm:py-12 md:py-16 w-full">
       {/* Hero */}
-      <div className="text-center mb-12">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-mono text-slate-600 mb-5 shadow-sm">
+      <div className="text-center mb-8 sm:mb-12">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-mono text-slate-600 mb-4 sm:mb-5 shadow-sm">
           <span aria-hidden>💼</span>
           <span>Fiyatlandırma</span>
         </div>
-        <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-3 leading-[1.08]">
+        <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-2 sm:mb-3 leading-[1.08]">
           Kayıtta <span className="bg-gradient-to-r from-[var(--accent)] to-red-600 bg-clip-text text-transparent">1 kredi ücretsiz</span>.
-          <br className="hidden md:block" />
+          <br className="hidden sm:block" />
           Daha fazlası mı? Paket al.
         </h1>
-        <p className="text-base text-slate-600 max-w-xl mx-auto leading-relaxed">
+        <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto leading-relaxed">
           Karmaşık plan yok. Kayıt olunca 1 rapor kredisi hediye. Bittiyse ek paket satın al.
           Krediler süresiz geçerli — sıfırlanmaz.
         </p>
@@ -111,21 +111,21 @@ export default async function PricingPage() {
               </div>
             )}
 
-            <div className="p-5 sm:p-8 md:p-10">
-              <div className="flex items-baseline justify-between flex-wrap gap-3 mb-2">
-                <h3 className="text-2xl font-bold text-slate-900 tracking-tight">{pack.label}</h3>
-                <span className="text-[11px] font-mono font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[var(--accent)]/10 text-[var(--accent-strong)] border border-[var(--accent)]/30">
+            <div className="p-4 sm:p-6 md:p-10">
+              <div className="flex items-baseline justify-between flex-wrap gap-2 mb-2">
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">{pack.label}</h3>
+                <span className="text-[10px] sm:text-[11px] font-mono font-bold uppercase tracking-wider px-2 sm:px-3 py-1 rounded-full bg-[var(--accent)]/10 text-[var(--accent-strong)] border border-[var(--accent)]/30">
                   Tek Seferlik
                 </span>
               </div>
 
               {/* Fiyat — strikethrough + indirim */}
-              <div className="mb-6">
-                <div className="flex items-baseline gap-3 flex-wrap">
-                  <span className="text-3xl sm:text-5xl md:text-6xl font-bold text-slate-900 tracking-tight">
+              <div className="mb-5 sm:mb-6">
+                <div className="flex items-baseline gap-2 sm:gap-3 flex-wrap">
+                  <span className="text-2xl sm:text-4xl md:text-6xl font-bold text-slate-900 tracking-tight">
                     ₺{pack.priceTry.toLocaleString('tr-TR')}
                   </span>
-                  <span className="text-xl sm:text-2xl text-slate-400 line-through decoration-2 decoration-red-400/60 font-medium">
+                  <span className="text-lg sm:text-2xl text-slate-400 line-through decoration-2 decoration-red-400/60 font-medium">
                     ₺{pack.originalPrice.toLocaleString('tr-TR')}
                   </span>
                 </div>
@@ -165,7 +165,7 @@ export default async function PricingPage() {
               {!user ? (
                 <Link
                   href="/register"
-                  className={`block w-full text-center px-6 py-4 rounded-xl text-white font-semibold text-base shadow-[0_4px_16px_rgba(232,86,10,0.25)] hover:shadow-[0_6px_24px_rgba(232,86,10,0.35)] hover:-translate-y-0.5 transition-all ${
+                  className={`block w-full text-center px-4 sm:px-6 py-3 sm:py-4 rounded-xl text-white font-semibold text-sm sm:text-base shadow-[0_4px_16px_rgba(232,86,10,0.25)] hover:shadow-[0_6px_24px_rgba(232,86,10,0.35)] hover:-translate-y-0.5 transition-all ${
                     pack.popular
                       ? 'bg-gradient-to-br from-[var(--accent)] to-red-600'
                       : 'bg-gradient-to-br from-slate-700 to-slate-800'
@@ -180,7 +180,7 @@ export default async function PricingPage() {
                   href={buildWhatsAppUrl(user.email, pack.label, pack.priceTry)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`block w-full text-center px-6 py-4 rounded-xl text-white font-semibold text-base shadow-[0_4px_16px_rgba(232,86,10,0.25)] hover:shadow-[0_6px_24px_rgba(232,86,10,0.35)] hover:-translate-y-0.5 transition-all ${
+                  className={`block w-full text-center px-4 sm:px-6 py-3 sm:py-4 rounded-xl text-white font-semibold text-sm sm:text-base shadow-[0_4px_16px_rgba(232,86,10,0.25)] hover:shadow-[0_6px_24px_rgba(232,86,10,0.35)] hover:-translate-y-0.5 transition-all ${
                     pack.popular
                       ? 'bg-gradient-to-br from-[var(--accent)] to-red-600'
                       : 'bg-gradient-to-br from-slate-700 to-slate-800'

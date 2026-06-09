@@ -5,7 +5,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-screen lg:grid lg:grid-cols-[1.05fr_1fr]">
       {/* Sol Hero Panel — dark navy + radial accent + logo pill + bullets */}
       <aside
-        className="relative overflow-hidden px-8 py-12 sm:px-12 sm:py-16 lg:flex lg:flex-col lg:justify-between hidden lg:block"
+        className="relative overflow-hidden px-8 py-12 sm:px-12 sm:py-16 hidden lg:flex lg:flex-col lg:justify-between"
         style={{ backgroundColor: 'var(--primary)' }}
       >
         <div

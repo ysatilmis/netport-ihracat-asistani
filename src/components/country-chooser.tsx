@@ -157,7 +157,7 @@ export function CountryChooser({ countries, product, onPick, disabled }: Country
             <p className="text-xs text-amber-600 mb-3">
               ⚠ AI bu ülkeyi önermediydi — rapor seçtiğiniz ülke için üretilecek.
             </p>
-            <form onSubmit={handleCustomSubmit} className="flex gap-2 items-start">
+            <form onSubmit={handleCustomSubmit} className="flex flex-wrap sm:flex-nowrap gap-2 items-start">
               <Input
                 value={customCountry}
                 onChange={(e) => setCustomCountry(e.target.value)}
