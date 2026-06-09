@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useSyncExternalStore, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { ProductForm } from './product-form'
 import { ReportProgress } from './report-progress'
 import { ReportView } from './report-view'
@@ -41,6 +42,7 @@ function isAgriculturalProduct(product: string): boolean {
 }
 
 export function DashboardClient({ defaultProduct, isExhausted = false }: DashboardClientProps) {
+  const router = useRouter()
   const [euWarningDismissed, setEuWarningDismissed] = useState(false)
   const streamer = getReportStreamer()
   const state = useSyncExternalStore(
@@ -71,6 +73,14 @@ export function DashboardClient({ defaultProduct, isExhausted = false }: Dashboa
     savedReportId,
   } = state
 
+  // Refresh server components (nav credit meter, isExhausted) when report completes.
+  // Credit is spent on the server at this point; stale nav would show wrong balance.
+  useEffect(() => {
+    if (step === 'done') {
+      router.refresh()
+    }
+  }, [step, router])
+
   const handleProductSubmit = (product: string) => {
     void streamer.startCountries(product)
   }
@@ -80,7 +90,10 @@ export function DashboardClient({ defaultProduct, isExhausted = false }: Dashboa
     void streamer.startDeepDive(country)
   }
 
-  const reset = () => streamer.reset()
+  const reset = () => {
+    streamer.reset()
+    router.refresh()
+  }
 
   return (
     <div className="flex flex-col items-center">
