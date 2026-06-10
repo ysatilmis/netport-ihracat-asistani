@@ -1,11 +1,19 @@
 import type { Metadata } from 'next'
+import { createClient } from '@/lib/supabase/server'
 import { FeedbackForm } from './feedback-form'
 
 export const metadata: Metadata = {
   title: 'Geri Bildirim — Netport İhracat Asistanı',
 }
 
-export default function FeedbackPage() {
+export default async function FeedbackPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data: profile } = user
+    ? await supabase.from('users').select('full_name').eq('id', user.id).single()
+    : { data: null }
+
   return (
     <main className="max-w-xl mx-auto px-4 py-10 w-full">
       <div className="mb-8">
@@ -17,13 +25,16 @@ export default function FeedbackPage() {
           Görüşlerinizi paylaşın
         </h1>
         <p className="text-sm text-slate-500 leading-relaxed">
-          Gönderdiğiniz form <strong>anonim</strong> olarak işlenir — kimlik bilgisi saklanmaz.
-          Ürünü geliştirmemize yardımcı olan her geri bildirim değerlidir.
+          Varsayılan olarak formunuz <strong>anonim</strong> işlenir.
+          Geri dönüş almak isterseniz bilgilerinizi paylaşabilirsiniz.
         </p>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
-        <FeedbackForm />
+        <FeedbackForm
+          defaultName={profile?.full_name ?? ''}
+          defaultEmail={user?.email ?? ''}
+        />
       </div>
     </main>
   )

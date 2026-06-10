@@ -96,8 +96,8 @@ export type Database = {
         Relationships: []
       }
       feedback: {
-        Row: { id: string; rating: number | null; message: string; created_at: string }
-        Insert: { rating?: number | null; message: string; created_at?: string }
+        Row: { id: string; rating: number | null; message: string; user_name: string | null; user_email: string | null; created_at: string }
+        Insert: { rating?: number | null; message: string; user_name?: string | null; user_email?: string | null; created_at?: string }
         Update: never
         Relationships: []
       }

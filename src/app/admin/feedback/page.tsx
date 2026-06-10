@@ -45,6 +45,7 @@ export default async function AdminFeedbackPage() {
               <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-500">
                 <th className="px-5 py-3 text-left">Tarih</th>
                 <th className="px-5 py-3 text-left">Puan</th>
+                <th className="px-5 py-3 text-left">Gönderen</th>
                 <th className="px-5 py-3 text-left">Mesaj</th>
               </tr>
             </thead>
@@ -53,6 +54,20 @@ export default async function AdminFeedbackPage() {
                 <tr key={f.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60 transition-colors align-top">
                   <td className="px-5 py-4 text-slate-500 font-mono text-xs whitespace-nowrap">{formatDate(f.created_at)}</td>
                   <td className="px-5 py-4 whitespace-nowrap"><Stars rating={f.rating} /></td>
+                  <td className="px-5 py-4">
+                    {f.user_name || f.user_email ? (
+                      <div>
+                        {f.user_name && <div className="font-medium text-slate-800 text-xs">{f.user_name}</div>}
+                        {f.user_email && (
+                          <a href={`mailto:${f.user_email}`} className="text-[11px] text-blue-600 hover:underline font-mono">
+                            {f.user_email}
+                          </a>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-400 font-mono italic">anonim</span>
+                    )}
+                  </td>
                   <td className="px-5 py-4 text-slate-700 leading-relaxed">{f.message}</td>
                 </tr>
               ))}

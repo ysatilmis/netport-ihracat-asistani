@@ -4,11 +4,21 @@ import { useState, useTransition } from 'react'
 import { submitFeedback } from '@/actions/feedback'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 
-export function FeedbackForm() {
+export function FeedbackForm({
+  defaultName,
+  defaultEmail,
+}: {
+  defaultName: string
+  defaultEmail: string
+}) {
   const [rating, setRating] = useState(0)
   const [hovered, setHovered] = useState(0)
   const [message, setMessage] = useState('')
+  const [shareIdentity, setShareIdentity] = useState(false)
+  const [name, setName] = useState(defaultName)
+  const [email, setEmail] = useState(defaultEmail)
   const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
@@ -17,12 +27,14 @@ export function FeedbackForm() {
     e.preventDefault()
     setError(null)
     startTransition(async () => {
-      const result = await submitFeedback(rating, message)
-      if (result.ok) {
-        setDone(true)
-      } else {
-        setError(result.error)
-      }
+      const result = await submitFeedback(
+        rating,
+        message,
+        shareIdentity ? name : undefined,
+        shareIdentity ? email : undefined,
+      )
+      if (result.ok) setDone(true)
+      else setError(result.error)
     })
   }
 
@@ -78,6 +90,51 @@ export function FeedbackForm() {
           className="resize-none"
         />
         <p className="text-xs text-slate-400 mt-1 text-right">{message.length}/1000</p>
+      </div>
+
+      {/* Kimlik paylaşma toggle */}
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <label className="flex items-center gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={shareIdentity}
+            onChange={(e) => setShareIdentity(e.target.checked)}
+            className="w-4 h-4 rounded border-slate-300 text-[var(--accent)] focus:ring-[var(--accent)]"
+          />
+          <span className="text-sm font-medium text-slate-700">
+            Bilgilerimi paylaş — geri dönüş almak istiyorum
+          </span>
+        </label>
+
+        {shareIdentity && (
+          <div className="mt-4 space-y-3">
+            <div>
+              <label htmlFor="user-name" className="block text-xs font-medium text-slate-600 mb-1">
+                Ad Soyad
+              </label>
+              <Input
+                id="user-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Adınız Soyadınız"
+                className="h-9 text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="user-email" className="block text-xs font-medium text-slate-600 mb-1">
+                E-posta
+              </label>
+              <Input
+                id="user-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="ornek@email.com"
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {error && (
