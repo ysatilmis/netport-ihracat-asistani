@@ -1,5 +1,5 @@
 'use server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -58,7 +58,7 @@ export async function signUp(_prevState: unknown, formData: FormData) {
   if (validationError) return { error: validationError }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email: email as string,
     password: password as string,
     options: {
@@ -69,6 +69,37 @@ export async function signUp(_prevState: unknown, formData: FormData) {
 
   if (error) {
     return { error: sanitizeError(error.message) }
+  }
+
+  // Guarantee subscription row with 1 free credit regardless of DB trigger state.
+  // ignoreDuplicates: false → if trigger created row with credits=0, this overwrites to 1.
+  // If trigger worked correctly (credits=1), this is a no-op for credits value.
+  if (data.user?.id) {
+    try {
+      const service = await createServiceClient()
+      // Ensure public.users row exists first (FK dependency for subscriptions)
+      await service.from('users').upsert(
+        { id: data.user.id, email: email as string, full_name: (fullName as string) || '' },
+        { onConflict: 'id', ignoreDuplicates: true }
+      )
+      const today = new Date().toISOString().split('T')[0]
+      const in30 = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
+      await service.from('subscriptions').upsert(
+        {
+          user_id: data.user.id,
+          plan: 'free',
+          monthly_limit_tokens: 0,
+          current_period_start: today,
+          current_period_end: in30,
+          extra_tokens: 0,
+          credits: 1,
+        },
+        { onConflict: 'user_id', ignoreDuplicates: false }
+      )
+    } catch (err) {
+      console.error('[auth] signUp subscription seed failed:', err)
+      // Don't block signup — DB trigger may have already handled it correctly
+    }
   }
 
   return { success: true, email: email as string }
