@@ -186,7 +186,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <p className="text-xs text-slate-500">
-                2026 &copy; Netport Global A.&zwnj;Ş. &mdash; AI destekli ihracat çözümü StrategAI
+                2026 &copy; Netport Global A.&zwnj;Ş. &mdash; AI destekli ihracat çözümü
               </p>
               <Link
                 href="/kvkk"
