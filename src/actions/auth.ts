@@ -72,8 +72,13 @@ export async function signUp(_prevState: unknown, formData: FormData) {
   }
 
   // Guarantee subscription row with 1 free credit regardless of DB trigger state.
-  // Uses select-then-insert/update instead of upsert(onConflict) because
-  // the unique constraint on user_id (migration 018) may not be applied yet.
+  //
+  // Uses select-then-insert/update instead of upsert(onConflict) for resilience:
+  // - Works even if migration 018 (unique constraint on user_id) is not applied
+  // - Each step logged separately for easier debugging
+  // - DB trigger handle_new_subscription should create row, but we verify/ensure
+  //
+  // Migration 017+018 applied 2026-06-10 (verified in production).
   const userId = data.user?.id
   if (!userId) {
     console.error('[auth] signUp succeeded but no user.id returned — subscription will rely on DB trigger')
@@ -96,7 +101,7 @@ export async function signUp(_prevState: unknown, formData: FormData) {
     }
 
     if (!existingUser || existingUser.length === 0) {
-      console.log('[auth] users row missing — inserting manually for', userId)
+      // Trigger didn't create users row — insert manually
       const { error: userInsertError } = await service.from('users').insert({
         id: userId,
         email: email as string,
@@ -126,7 +131,6 @@ export async function signUp(_prevState: unknown, formData: FormData) {
 
     if (!existingSub || existingSub.length === 0) {
       // No subscription row — create one with 1 free credit
-      console.log('[auth] creating subscription for new user', userId)
       const { error: subInsertError } = await service.from('subscriptions').insert({
         user_id: userId,
         plan: 'free',
@@ -140,17 +144,12 @@ export async function signUp(_prevState: unknown, formData: FormData) {
       })
       if (subInsertError) {
         console.error('[auth] subscriptions insert FAILED:', subInsertError)
-      } else {
-        console.log('[auth] subscription created successfully for', userId)
       }
     } else if (existingSub[0].credits < 1) {
       // Trigger created row but with 0 credits — fix it
-      console.log('[auth] fixing credits=0 subscription for', userId)
       await service.from('subscriptions')
         .update({ credits: 1 })
         .eq('id', existingSub[0].id)
-    } else {
-      console.log('[auth] subscription already exists with credits=', existingSub[0].credits, 'for', userId)
     }
   } catch (err) {
     console.error('[auth] signUp subscription seed EXCEPTION:', err)
