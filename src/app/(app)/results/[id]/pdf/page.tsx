@@ -128,14 +128,18 @@ export default async function ReportPdfPage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return notFound()
 
-  // Admin kontrolü: admin ise user_id filtresini kaldır (başka kullanıcının raporunu görebilir)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: userProfile } = await (supabase.from('users') as any)
-    .select('role')
-    .eq('id', user.id)
-    .single() as { data: { role: string } | null }
+  // Admin kontrolü: önce ADMIN_EMAIL env var, sonra users.role (admin.ts ile aynı mantık)
+  const adminEmails = (process.env.ADMIN_EMAIL || '').split(',').map(e => e.trim().toLowerCase())
+  let isAdmin = user.email ? adminEmails.includes(user.email.toLowerCase()) : false
 
-  const isAdmin = userProfile?.role === 'admin'
+  if (!isAdmin) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: userProfile } = await (supabase.from('users') as any)
+      .select('role')
+      .eq('id', user.id)
+      .single() as { data: { role: string } | null }
+    isAdmin = userProfile?.role === 'admin'
+  }
 
   // Admin ise service client kullan (RLS bypass), değilse normal client (RLS uygulanır)
   const dbClient = isAdmin ? await createServiceClient() : supabase
