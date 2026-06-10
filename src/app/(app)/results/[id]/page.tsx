@@ -5,12 +5,9 @@ import { ReportSection } from '@/components/report-section'
 import { Markdown } from '@/components/markdown'
 import { ReportToc, type TocItem } from '@/components/report-toc'
 import { ReportActions } from '@/components/report-actions'
+import { ReportOnboarding } from '@/components/report-onboarding'
 import { SignalList } from '@/components/signal-list'
-import { QualityPanel } from '@/components/quality-panel'
-import { LeadsPanel } from '@/components/leads-panel'
 import { getSignalsForReport } from '@/actions/signals'
-import { getQualityCheck } from '@/actions/quality'
-import { getLeads } from '@/actions/leads'
 import { REPORT_SECTIONS } from '@/lib/report-prompts'
 
 type ReportSectionData = { title: string; text: string; phase: number }
@@ -110,42 +107,13 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
             </>
           )}
         </div>
-        {isFullReport && country && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link
-              href={`/positioning/${report.id}`}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white shadow-sm transition-transform hover:-translate-y-0.5"
-              style={{ backgroundColor: 'var(--primary)' }}
-            >
-              🎯 Faz B&apos;ye geç — Konumlandırma paketini üret
-            </Link>
-            <Link
-              href={`/leads/${report.id}`}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-300 text-slate-700 hover:bg-slate-50 transition-transform hover:-translate-y-0.5"
-            >
-              🎯 Alıcı Bul
-            </Link>
-          </div>
-        )}
       </header>
+
+      {/* Yeni kullanıcı için tek-seferlik ipucu */}
+      <ReportOnboarding />
 
       {/* Pazar Sinyali Ajanı uyarıları */}
       <SignalList signals={await getSignalsForReport(report.id)} />
-
-      {/* Kalite Kontrol Ajanı paneli */}
-      {isFullReport && (
-        <QualityPanel reportId={report.id} initial={await getQualityCheck(report.id)} />
-      )}
-
-      {/* Lead Bul Ajanı paneli */}
-      {isFullReport && (
-        <LeadsPanel
-          reportId={report.id}
-          initial={await getLeads(report.id)}
-          product={product}
-          country={country}
-        />
-      )}
 
       {isFullReport ? (
         <>
@@ -205,19 +173,6 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
                 )
               })()}
             </article>
-          </div>
-
-          {/* Ek Analizler */}
-          <div className="mt-8 border-t pt-6">
-            <h3 className="text-base font-semibold text-slate-700 mb-3">Ek Analizler</h3>
-            <div className="flex gap-3 flex-wrap">
-              <a href={`/leads/${report.id}`} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium hover:bg-slate-50">
-                🎯 B2B Alıcı Listesi Hazırla
-              </a>
-              <a href={`/positioning/${report.id}`} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium hover:bg-slate-50">
-                🎯 Positioning Paketi Hazırla
-              </a>
-            </div>
           </div>
         </>
       ) : (

@@ -328,23 +328,6 @@ export function DashboardClient({ defaultProduct, isExhausted = false }: Dashboa
               </a>
             </div>
           )}
-          {savedReportId && (
-            <a
-              href={`/positioning/${savedReportId}`}
-              className="p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm transition-all flex items-start justify-between gap-3"
-            >
-              <div>
-                <div className="font-semibold text-slate-900 mb-0.5">
-                  🎯 Faz B — Konumlandırma Paketi
-                </div>
-                <p className="text-sm text-slate-600">
-                  {selectedCountry} için USP, alıcı persona'ları, hedef dilde ürün
-                  açıklaması ve cold email taslakları.
-                </p>
-              </div>
-              <span className="text-sm text-slate-500 whitespace-nowrap">Devam et →</span>
-            </a>
-          )}
           <button
             className="text-sm underline self-start mt-2"
             style={{ color: 'var(--muted-foreground)' }}
