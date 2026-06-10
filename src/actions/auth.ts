@@ -74,6 +74,29 @@ export async function signUp(_prevState: unknown, formData: FormData) {
   return { success: true, email: email as string }
 }
 
+export async function resendConfirmation(_prevState: unknown, formData: FormData) {
+  const email = formData.get('email')
+  if (!email || typeof email !== 'string' || !EMAIL_RE.test(email)) {
+    return { error: 'Geçerli bir e-posta adresi girin.' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://netportai.com'}/auth/callback`,
+    },
+  })
+
+  if (error) {
+    console.error('[auth] resendConfirmation error:', error.message)
+    return { error: 'Mail gönderilemedi. Lütfen tekrar deneyin.' }
+  }
+
+  return { success: true }
+}
+
 export async function signOut() {
   const supabase = await createClient()
   await supabase.auth.signOut()

@@ -1,8 +1,45 @@
 'use client'
-import { signIn } from '@/actions/auth'
+import { signIn, resendConfirmation } from '@/actions/auth'
 import Link from 'next/link'
 import { useActionState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+
+function ResendForm() {
+  const [state, action, pending] = useActionState(resendConfirmation, undefined)
+
+  if (state?.success) {
+    return (
+      <div className="mb-6 rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-sm text-emerald-800 font-medium">
+        Onay maili tekrar gönderildi. Lütfen mail kutunuzu kontrol edin.
+      </div>
+    )
+  }
+
+  return (
+    <div className="mb-6 rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
+      <p className="font-semibold mb-3">Onay bağlantısının süresi dolmuş.</p>
+      <form action={action} className="flex gap-2">
+        <input
+          name="email"
+          type="email"
+          required
+          placeholder="E-posta adresiniz"
+          className="flex-1 rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200 transition-all"
+        />
+        <button
+          type="submit"
+          disabled={pending}
+          className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 transition-all whitespace-nowrap"
+        >
+          {pending ? 'Gönderiliyor...' : 'Yeniden Gönder'}
+        </button>
+      </form>
+      {state?.error && (
+        <p className="mt-2 text-xs text-red-600">{state.error}</p>
+      )}
+    </div>
+  )
+}
 
 function LoginAlerts() {
   const searchParams = useSearchParams()
@@ -17,11 +54,7 @@ function LoginAlerts() {
     )
   }
   if (callbackError) {
-    return (
-      <div className="mb-6 rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-red-700">
-        Onay bağlantısı geçersiz veya süresi dolmuş. Lütfen tekrar kayıt olmayı dene.
-      </div>
-    )
+    return <ResendForm />
   }
   return null
 }

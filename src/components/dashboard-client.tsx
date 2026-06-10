@@ -158,10 +158,10 @@ export function DashboardClient({ defaultProduct, isExhausted = false }: Dashboa
                 <div className="text-3xl" aria-hidden>🔒</div>
                 <div>
                   <p className="font-semibold text-slate-900 text-base mb-1">
-                    Bu ayki rapor hakkın bitti.
+                    Krediniz bitti.
                   </p>
                   <p className="text-sm text-slate-600">
-                    Yeni rapor üretmek için ek paket satın alabilirsin.
+                    Rapor üretmek için paket satın alabilirsiniz.
                   </p>
                 </div>
                 <a
