@@ -75,7 +75,7 @@ export async function updateUserLimit(userId: string, newLimit: number) {
   } else {
     const now = new Date().toISOString().split('T')[0]
     const end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-    await supabase.from('subscriptions').insert({
+    await supabase.from('subscriptions').upsert({
       user_id: userId,
       plan: 'free',
       monthly_limit_tokens: newLimit,
@@ -85,7 +85,7 @@ export async function updateUserLimit(userId: string, newLimit: number) {
       credits: 0,
       stripe_customer_id: null,
       stripe_subscription_id: null,
-    })
+    }, { onConflict: 'user_id' })
   }
 
   revalidatePath('/admin/users')
@@ -126,23 +126,29 @@ export async function updateUserCredits(userId: string, credits: number): Promis
       return { ok: false, error: 'SUBSCRIPTION_UPDATE_FAILED' }
     }
   } else {
+    // Upsert via RPC to avoid race-condition duplicates.
+    // handle_new_subscription trigger (migration 017) already has ON CONFLICT,
+    // but direct INSERT here wouldn't. Use the update path as fallback:
+    // if the row was created between lookup and insert, update instead.
     const now = new Date().toISOString().split('T')[0]
     const end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-    const { error: insertErr } = await supabase.from('subscriptions').insert({
-      user_id: userId,
-      plan: 'free',
-      monthly_limit_tokens: 0,
-      current_period_start: now,
-      current_period_end: end,
-      extra_tokens: 0,
-      credits,
-      stripe_customer_id: null,
-      stripe_subscription_id: null,
-    })
+    const { error: upsertErr } = await supabase
+      .from('subscriptions')
+      .upsert({
+        user_id: userId,
+        plan: 'free',
+        monthly_limit_tokens: 0,
+        current_period_start: now,
+        current_period_end: end,
+        extra_tokens: 0,
+        credits,
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+      }, { onConflict: 'user_id' })
 
-    if (insertErr) {
-      console.error('[admin] updateUserCredits insert failed:', insertErr)
-      return { ok: false, error: 'SUBSCRIPTION_INSERT_FAILED' }
+    if (upsertErr) {
+      console.error('[admin] updateUserCredits upsert failed:', upsertErr)
+      return { ok: false, error: 'SUBSCRIPTION_UPSERT_FAILED' }
     }
   }
 

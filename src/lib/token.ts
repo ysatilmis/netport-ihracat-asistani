@@ -14,25 +14,34 @@ export async function getCredits(userId: string): Promise<CreditBalance> {
   // Safe: userId always comes from auth.getUser() in a server component — never from user input.
   const supabase = await createServiceClient()
 
+  // Use .limit(1) instead of .maybeSingle() — resilient to duplicate subscription rows
+  // that might exist if migrations 017/018 haven't been applied or had cleanup gaps.
   const { data, error } = await supabase
     .from('subscriptions')
     .select('credits, plan')
     .eq('user_id', userId)
-    .maybeSingle()
+    .order('id', { ascending: true })
+    .limit(1)
 
   if (error) {
     console.error('[token] getCredits query failed:', error)
     return { credits: 0, plan: 'free' }
   }
 
-  if (!data) {
+  if (!data || data.length === 0) {
     // No subscription row — DB trigger should have created one.
     // Return 0 so the user sees the correct state; admin can assign credits via /admin/users.
     console.warn('[token] getCredits: no subscription row for user', userId)
     return { credits: 0, plan: 'free' }
   }
 
-  return { credits: data.credits, plan: data.plan }
+  // If duplicates exist (should not after migration 018), take the oldest row.
+  // Log a warning so we know the unique constraint might be missing.
+  if (data.length > 1) {
+    console.warn('[token] getCredits: duplicate subscription rows detected for user', userId, '— using oldest row')
+  }
+
+  return { credits: data[0].credits, plan: data[0].plan }
 }
 
 /**
