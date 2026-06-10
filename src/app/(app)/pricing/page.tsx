@@ -1,26 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { REPORT_PACKS } from '@/lib/stripe'
 import { getCredits } from '@/lib/token'
-import { iyzicoConfigured } from '@/lib/iyzico'
-import { IyzicoCheckoutButton } from '@/components/iyzico-checkout-button'
 import { Check } from 'lucide-react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Fiyatlandırma — Netport İhracat Asistanı',
-}
-
-// Yüksel Hanım'ın WhatsApp numarası
-const WHATSAPP_NUMBER = '905559891245'
-
-function buildWhatsAppUrl(userEmail?: string | null, packLabel?: string, packPrice?: number) {
-  const emailPart = userEmail ? `,${userEmail} kullanıcı hesabım için` : ''
-  const packPart = packLabel && packPrice ? ` ${packLabel} (₺${packPrice})` : ' ek rapor paketi'
-  const message = encodeURIComponent(
-    `Merhaba, Netport İhracat AI uygulamasından ulaşıyorum${emailPart}${packPart} satın almak istiyorum.`,
-  )
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`
 }
 
 export default async function PricingPage() {
@@ -173,11 +159,9 @@ export default async function PricingPage() {
                 >
                   Önce Kayıt Ol
                 </Link>
-              ) : iyzicoConfigured ? (
-                <IyzicoCheckoutButton priceTry={pack.priceTry} />
               ) : (
                 <a
-                  href={buildWhatsAppUrl(user.email, pack.label, pack.priceTry)}
+                  href={pack.paymentUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`block w-full text-center px-4 sm:px-6 py-3 sm:py-4 rounded-xl text-white font-semibold text-sm sm:text-base shadow-[0_4px_16px_rgba(232,86,10,0.25)] hover:shadow-[0_6px_24px_rgba(232,86,10,0.35)] hover:-translate-y-0.5 transition-all ${
@@ -187,7 +171,7 @@ export default async function PricingPage() {
                   }`}
                 >
                   <span className="inline-flex items-center gap-2">
-                    <span>WhatsApp ile Satın Al</span>
+                    <span>Kartla Satın Al</span>
                     <span aria-hidden>→</span>
                   </span>
                 </a>
@@ -196,9 +180,7 @@ export default async function PricingPage() {
               <p className="text-center text-xs text-slate-400 mt-4">
                 {!user
                   ? 'Kayıt ücretsiz, 1 kredin hemen aktif'
-                  : iyzicoConfigured
-                    ? 'Kartla güvenli ödeme — 3D Secure korumalı'
-                    : 'WhatsApp üzerinden Yüksel Hanım\'a ulaş, ödemeni yap, raporların hesabına tanımlansın'}
+                  : 'Iyzico ile güvenli kart ödemesi — 3D Secure korumalı'}
               </p>
             </div>
           </div>
@@ -212,10 +194,10 @@ export default async function PricingPage() {
           <div className="flex-1">
             <h4 className="text-sm font-semibold text-[var(--p1-fg)] mb-1">Nasıl çalışır?</h4>
             <p className="text-sm text-slate-700 leading-relaxed">
-              WhatsApp ile Yüksel Hanım'a ulaşırsın. Email adresin mesajda otomatik iletilir.
-              Ödeme linki email'ine gelir, kredi kartınla ödersin. Ödeme onaylanınca rapor hakların
-              hesabına eklenir. Soruların için:{' '}
-              <a href={`https://wa.me/${WHATSAPP_NUMBER}`} className="font-medium text-[var(--primary)] hover:underline">
+              Paketi seç, "Kartla Satın Al" ile Iyzico güvenli ödeme sayfasına yönlendirilirsin.
+              Kredi kartınla ödemeni yaparsın. Ödeme onaylanınca rapor hakların hesabına eklenir.
+              Soruların için:{' '}
+              <a href="https://wa.me/905559891245" className="font-medium text-[var(--primary)] hover:underline">
                 +90 555 989 12 45
               </a>
             </p>

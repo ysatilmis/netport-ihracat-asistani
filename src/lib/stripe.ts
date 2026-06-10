@@ -42,6 +42,7 @@ export const REPORT_PACKS = [
     label: '3 Ek Rapor',
     description: 'Aylık rapor hakkın bittiyse 3 ek rapor satın al. Mevcut periyodun sonuna kadar kullanılır.',
     popular: false,
+    paymentUrl: 'https://iyzi.link/AKnePA',
   },
   {
     id: 'pack10',
@@ -51,6 +52,7 @@ export const REPORT_PACKS = [
     label: '10 Ek Rapor',
     description: 'Daha fazla ihracat pazarı analizi için 10 ek rapor. En çok tercih edilen paket.',
     popular: true,
+    paymentUrl: 'https://iyzi.link/AKneVw',
   },
 ] as const
 
