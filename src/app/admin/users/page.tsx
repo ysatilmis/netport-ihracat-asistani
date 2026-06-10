@@ -1,6 +1,7 @@
 import { getAllUsersDetailed } from '@/actions/admin'
 import { Badge } from '@/components/ui/badge'
 import { CreditForm } from './credit-form'
+import { DeleteUserButton } from './delete-user-button'
 import Link from 'next/link'
 
 export default async function AdminUsersPage() {
@@ -31,6 +32,7 @@ export default async function AdminUsersPage() {
                 <th className="px-5 py-3 text-left">Kredi</th>
                 <th className="px-5 py-3 text-left">Ödeme</th>
                 <th className="px-5 py-3 text-left">Kredi Güncelle</th>
+                <th className="px-5 py-3 text-left"></th>
               </tr>
             </thead>
             <tbody>
@@ -117,6 +119,9 @@ function UserRow({ user }: { user: UserData }) {
       <td className="px-5 py-4">
         <CreditForm userId={user.id} defaultCredits={user.credits} />
       </td>
+      <td className="px-5 py-4">
+        <DeleteUserButton userId={user.id} userName={user.full_name ?? user.email ?? user.id} />
+      </td>
     </tr>
   )
 }
@@ -148,7 +153,10 @@ function UserCard({ user }: { user: UserData }) {
         {extraPacks > 0 && <span className="text-green-700">+{extraPacks} ek paket</span>}
         {user.paymentCount > 0 && <span>{user.paymentCount} ödeme · ₺{user.paymentTotal.toLocaleString('tr-TR')}</span>}
       </div>
-      <CreditForm userId={user.id} defaultCredits={user.credits} />
+      <div className="flex items-center justify-between gap-2">
+        <CreditForm userId={user.id} defaultCredits={user.credits} />
+        <DeleteUserButton userId={user.id} userName={user.full_name ?? user.email ?? user.id} />
+      </div>
     </div>
   )
 }

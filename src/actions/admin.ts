@@ -171,6 +171,18 @@ export async function getAllReports(): Promise<ReportWithUser[]> {
   return data ?? []
 }
 
+export async function deleteUser(userId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const currentUser = await requireAdmin()
+  if (currentUser.id === userId) {
+    return { ok: false, error: 'Kendi hesabını silemezsin' }
+  }
+  const supabase = await createServiceClient()
+  const { error } = await supabase.auth.admin.deleteUser(userId)
+  if (error) return { ok: false, error: error.message }
+  revalidatePath('/admin/users')
+  return { ok: true }
+}
+
 export async function deleteAnyReport(reportId: string) {
   await requireAdmin()
   const supabase = await createServiceClient()
