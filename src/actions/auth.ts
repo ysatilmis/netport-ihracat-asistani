@@ -93,6 +93,8 @@ export async function signUp(_prevState: unknown, formData: FormData) {
           current_period_end: in30,
           extra_tokens: 0,
           credits: 1,
+          stripe_customer_id: null,
+          stripe_subscription_id: null,
         },
         { onConflict: 'user_id', ignoreDuplicates: false }
       )
