@@ -71,17 +71,6 @@ export async function signUp(_prevState: unknown, formData: FormData) {
     return { error: sanitizeError(error.message) }
   }
 
-  // DEBUG: Log signUp response to diagnose subscription creation issues
-  console.log('[auth] signUp response:', {
-    hasUser: !!data.user,
-    userId: data.user?.id,
-    email: data.user?.email,
-    session: !!data.session,
-    aud: data.user?.aud,
-    confirmedAt: data.user?.confirmed_at,
-    emailConfirmedAt: data.user?.email_confirmed_at,
-  })
-
   // Guarantee subscription row with 1 free credit regardless of DB trigger state.
   // Uses select-then-insert/update instead of upsert(onConflict) because
   // the unique constraint on user_id (migration 018) may not be applied yet.
