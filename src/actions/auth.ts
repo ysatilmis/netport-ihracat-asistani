@@ -71,51 +71,101 @@ export async function signUp(_prevState: unknown, formData: FormData) {
     return { error: sanitizeError(error.message) }
   }
 
+  // DEBUG: Log signUp response to diagnose subscription creation issues
+  console.log('[auth] signUp response:', {
+    hasUser: !!data.user,
+    userId: data.user?.id,
+    email: data.user?.email,
+    session: !!data.session,
+    aud: data.user?.aud,
+    confirmedAt: data.user?.confirmed_at,
+    emailConfirmedAt: data.user?.email_confirmed_at,
+  })
+
   // Guarantee subscription row with 1 free credit regardless of DB trigger state.
   // Uses select-then-insert/update instead of upsert(onConflict) because
   // the unique constraint on user_id (migration 018) may not be applied yet.
-  if (data.user?.id) {
-    try {
-      const service = await createServiceClient()
-      // Ensure public.users row exists first (FK dependency for subscriptions)
-      await service.from('users').upsert(
-        { id: data.user.id, email: email as string, full_name: (fullName as string) || '', role: 'user' as const, product_name: null, target_country: null },
-        { onConflict: 'id', ignoreDuplicates: true }
-      )
+  const userId = data.user?.id
+  if (!userId) {
+    console.error('[auth] signUp succeeded but no user.id returned — subscription will rely on DB trigger')
+    return { success: true, email: email as string }
+  }
 
-      // Check if subscription row already exists (from DB trigger or previous attempt)
-      const { data: existingSub } = await service
-        .from('subscriptions')
-        .select('id, credits')
-        .eq('user_id', data.user.id)
-        .limit(1)
+  try {
+    const service = await createServiceClient()
 
-      const today = new Date().toISOString().split('T')[0]
-      const in30 = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
+    // Step 1: Ensure public.users row exists (FK dependency for subscriptions)
+    // DB trigger handle_new_user should have created it, but we verify/ensure
+    const { data: existingUser, error: userSelectError } = await service
+      .from('users')
+      .select('id')
+      .eq('id', userId)
+      .limit(1)
 
-      if (!existingSub || existingSub.length === 0) {
-        // No subscription row — create one with 1 free credit
-        await service.from('subscriptions').insert({
-          user_id: data.user.id,
-          plan: 'free',
-          monthly_limit_tokens: 0,
-          current_period_start: today,
-          current_period_end: in30,
-          extra_tokens: 0,
-          credits: 1,
-          stripe_customer_id: null,
-          stripe_subscription_id: null,
-        })
-      } else if (existingSub[0].credits < 1) {
-        // Trigger created row but with 0 credits — fix it
-        await service.from('subscriptions')
-          .update({ credits: 1 })
-          .eq('id', existingSub[0].id)
-      }
-    } catch (err) {
-      console.error('[auth] signUp subscription seed failed:', err)
-      // Don't block signup — DB trigger may have already handled it correctly
+    if (userSelectError) {
+      console.error('[auth] users select failed:', userSelectError)
     }
+
+    if (!existingUser || existingUser.length === 0) {
+      console.log('[auth] users row missing — inserting manually for', userId)
+      const { error: userInsertError } = await service.from('users').insert({
+        id: userId,
+        email: email as string,
+        full_name: (fullName as string) || '',
+        role: 'user' as const,
+        product_name: null,
+        target_country: null,
+      })
+      if (userInsertError) {
+        console.error('[auth] users insert failed:', userInsertError)
+      }
+    }
+
+    // Step 2: Check if subscription row exists
+    const { data: existingSub, error: subSelectError } = await service
+      .from('subscriptions')
+      .select('id, credits')
+      .eq('user_id', userId)
+      .limit(1)
+
+    if (subSelectError) {
+      console.error('[auth] subscriptions select failed:', subSelectError)
+    }
+
+    const today = new Date().toISOString().split('T')[0]
+    const in30 = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
+
+    if (!existingSub || existingSub.length === 0) {
+      // No subscription row — create one with 1 free credit
+      console.log('[auth] creating subscription for new user', userId)
+      const { error: subInsertError } = await service.from('subscriptions').insert({
+        user_id: userId,
+        plan: 'free',
+        monthly_limit_tokens: 0,
+        current_period_start: today,
+        current_period_end: in30,
+        extra_tokens: 0,
+        credits: 1,
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+      })
+      if (subInsertError) {
+        console.error('[auth] subscriptions insert FAILED:', subInsertError)
+      } else {
+        console.log('[auth] subscription created successfully for', userId)
+      }
+    } else if (existingSub[0].credits < 1) {
+      // Trigger created row but with 0 credits — fix it
+      console.log('[auth] fixing credits=0 subscription for', userId)
+      await service.from('subscriptions')
+        .update({ credits: 1 })
+        .eq('id', existingSub[0].id)
+    } else {
+      console.log('[auth] subscription already exists with credits=', existingSub[0].credits, 'for', userId)
+    }
+  } catch (err) {
+    console.error('[auth] signUp subscription seed EXCEPTION:', err)
+    // Don't block signup — DB trigger may have already handled it correctly
   }
 
   return { success: true, email: email as string }
