@@ -79,7 +79,7 @@ export async function signUp(_prevState: unknown, formData: FormData) {
       const service = await createServiceClient()
       // Ensure public.users row exists first (FK dependency for subscriptions)
       await service.from('users').upsert(
-        { id: data.user.id, email: email as string, full_name: (fullName as string) || '' },
+        { id: data.user.id, email: email as string, full_name: (fullName as string) || '', role: 'user' as const, product_name: null, target_country: null },
         { onConflict: 'id', ignoreDuplicates: true }
       )
       const today = new Date().toISOString().split('T')[0]
