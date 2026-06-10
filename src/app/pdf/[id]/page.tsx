@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -137,12 +137,29 @@ export default async function ReportPdfPage({ params }: Props) {
     )
   }
 
+  // Admin kontrolü: admin ise user_id filtresini kaldır (başka kullanıcının raporunu görebilir)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: report, error } = await (supabase.from('reports') as any)
+  const { data: userProfile } = await (supabase.from('users') as any)
+    .select('role')
+    .eq('id', user.id)
+    .single() as { data: { role: string } | null }
+
+  const isAdmin = userProfile?.role === 'admin'
+
+  // Admin ise service client kullan (RLS bypass), değilse normal client (RLS uygulanır)
+  const dbClient = isAdmin ? await createServiceClient() : supabase
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let reportQuery = (dbClient.from('reports') as any)
     .select('id, input_json, output_text, report_sections, is_full_report, created_at')
     .eq('id', id)
-    .eq('user_id', user.id)
-    .single() as { data: Record<string, unknown> | null; error: unknown }
+
+  if (!isAdmin) {
+    // Normal kullanıcılar sadece kendi raporlarını görebilir
+    reportQuery = reportQuery.eq('user_id', user.id)
+  }
+
+  const { data: report, error } = await reportQuery.single() as { data: Record<string, unknown> | null; error: unknown }
 
   if (error || !report) {
     if (error) console.error('[pdf] supabase error:', error)

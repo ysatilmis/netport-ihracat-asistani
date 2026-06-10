@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -128,22 +128,39 @@ export default async function ReportPdfPage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return notFound()
 
+  // Admin kontrolü: admin ise user_id filtresini kaldır (başka kullanıcının raporunu görebilir)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: report } = await (supabase.from('reports') as any)
+  const { data: userProfile } = await (supabase.from('users') as any)
+    .select('role')
+    .eq('id', user.id)
+    .single() as { data: { role: string } | null }
+
+  const isAdmin = userProfile?.role === 'admin'
+
+  // Admin ise service client kullan (RLS bypass), değilse normal client (RLS uygulanır)
+  const dbClient = isAdmin ? await createServiceClient() : supabase
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let reportQuery = (dbClient.from('reports') as any)
     .select('*')
     .eq('id', id)
-    .eq('user_id', user.id)
-    .single() as {
-      data: {
-        id: string
-        input_json: Record<string, string>
-        output_text: string
-        report_sections: Record<string, { title: string; text: string; phase: number }> | null
-        is_full_report: boolean
-        created_at: string
-      } | null
-      error: unknown
-    }
+
+  if (!isAdmin) {
+    // Normal kullanıcılar sadece kendi raporlarını görebilir
+    reportQuery = reportQuery.eq('user_id', user.id)
+  }
+
+  const { data: report } = await reportQuery.single() as {
+    data: {
+      id: string
+      input_json: Record<string, string>
+      output_text: string
+      report_sections: Record<string, { title: string; text: string; phase: number }> | null
+      is_full_report: boolean
+      created_at: string
+    } | null
+    error: unknown
+  }
 
   if (!report) return notFound()
 
