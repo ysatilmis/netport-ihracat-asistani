@@ -95,6 +95,12 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['iyzico_pending_payments']['Insert']>
         Relationships: []
       }
+      feedback: {
+        Row: { id: string; rating: number | null; message: string; created_at: string }
+        Insert: { rating?: number | null; message: string; created_at?: string }
+        Update: never
+        Relationships: []
+      }
     }
   }
 }

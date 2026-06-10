@@ -399,3 +399,13 @@ export async function getAllUsersDetailed() {
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   )
 }
+
+export async function getAllFeedback() {
+  await requireAdmin()
+  const supabase = await createServiceClient()
+  const { data } = await supabase
+    .from('feedback')
+    .select('*')
+    .order('created_at', { ascending: false })
+  return data ?? []
+}

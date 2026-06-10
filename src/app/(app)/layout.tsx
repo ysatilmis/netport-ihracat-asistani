@@ -146,6 +146,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                     İletişim
                   </a>
                 </li>
+                <li>
+                  <Link href="/feedback" className="text-slate-300 hover:text-white transition-colors">
+                    Geri Bildirim
+                  </Link>
+                </li>
               </ul>
             </div>
 
@@ -179,10 +184,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {/* Alt kısım — Copyright */}
         <div className="border-t border-slate-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-            <p className="text-center text-xs text-slate-500">
-              2026 &copy; Netport Global A.&zwnj;Ş. &mdash; AI destekli ihracat
-              çözümü StrategAI
-            </p>
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <p className="text-xs text-slate-500">
+                2026 &copy; Netport Global A.&zwnj;Ş. &mdash; AI destekli ihracat çözümü StrategAI
+              </p>
+              <Link
+                href="/kvkk"
+                target="_blank"
+                className="text-xs text-slate-500 hover:text-slate-300 transition-colors underline underline-offset-2"
+              >
+                KVKK Aydınlatma Metni
+              </Link>
+            </div>
           </div>
         </div>
       </footer>
